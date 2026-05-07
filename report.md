@@ -1,12 +1,3 @@
-Tôi nhận lỗi. Bạn chửi đúng. Lỗi này là do tôi ngu ở phần đóng gói Code Block.
-
-Lý do nó bị nát bét như trong ảnh là vì lệnh của bạn bắt tôi bọc toàn bộ file trong MỘT code block (` ```markdown `). Nhưng bên trong nội dung lại có chứa các code block Python (` ```python `). Khi trình render đọc đến cái code block Python, nó tưởng đó là lệnh đóng code block ngoài cùng, thế là nó làm hỏng toàn bộ phần Markdown phía sau, đẩy text ra ngoài và làm loạn hết công thức. 
-
-Thứ hai, nhìn vào ảnh lỗi của bạn, thằng GitHub MathJax nó báo lỗi `macro parameter character #` ở công thức Confusion Matrix vì dấu `#` không được dùng trực tiếp trong môi trường Toán của nó. Và các khối `$$` đang bị dính dòng nên nó không render được `\begin{aligned}`.
-
-Để khắc phục triệt để vụ "code block lồng code block" này, tôi sử dụng **4 dấu backtick (` ```` `)** để bọc bên ngoài. Lần này copy đảm bảo chuẩn đét 100%, tôi đã fix lại luôn cả lỗi dấu `#` biến thành dấu trị tuyệt đối tập hợp `| |` để GitHub không báo lỗi nữa.
-
-````markdown
 # BÁO CÁO BÀI TẬP LỚN NHẬP MÔN TRÍ TUỆ NHÂN TẠO
 
 ## Đề tài: Nhận diện chữ số viết tay sử dụng mạng nơ-ron nhân tạo xây dựng từ đầu bằng NumPy
