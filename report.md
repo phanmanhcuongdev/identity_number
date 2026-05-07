@@ -1258,182 +1258,202 @@ Quá trình thực nghiệm cho thấy việc lựa chọn learning rate, kích 
 ---
 # Chương 4. Kết luận và hướng phát triển
 
-Chương cuối tổng kết các kết quả chính của đề tài và đánh giá mức độ hoàn thành mục tiêu ban đầu. Nội dung cần khách quan, không lặp lại quá nhiều chi tiết đã trình bày trong các chương trước.
+Chương cuối tổng kết các kết quả chính của đề tài và đánh giá mức độ hoàn thành mục tiêu ban đầu. Nội dung được trình bày dựa trên quá trình xây dựng mô hình ANN từ đầu bằng `NumPy`, kết quả thực nghiệm trên MNIST và khả năng mở rộng sang dữ liệu nét vẽ thực tế thông qua pipeline tiền xử lý ảnh.
 
-> 🛑 **[HÀNH ĐỘNG]**: Tổng kết kết quả đạt được, các đóng góp chính, hạn chế và hướng cải tiến trong tương lai.
+Nhìn chung, đề tài đã hoàn thành mục tiêu cốt lõi: xây dựng một mạng nơ-ron Fully Connected có kiến trúc $784 \rightarrow 128 \rightarrow 10$, huấn luyện bằng Batch Gradient Descent, đánh giá bằng các chỉ số định lượng và triển khai hướng kiểm thử trên dữ liệu ngoài phân phối MNIST. Kết quả cuối cùng cho thấy mô hình đạt train accuracy $92.32\%$ và dev accuracy $91.93\%$ sau $500$ iterations với learning rate $\alpha = 0.1$. Khoảng cách nhỏ giữa train accuracy và dev accuracy cho thấy mô hình hội tụ tốt và chưa có dấu hiệu overfitting nghiêm trọng.
 
 ---
 
 ## 4.1. Kết luận
 
-Phần kết luận cần khẳng định ngắn gọn những kết quả đã đạt được về mô hình, thực nghiệm và kiểm thử nét vẽ thực tế. Các nhận định nên dựa trên số liệu và phân tích đã trình bày trong Chương 3.
+Đề tài đã chứng minh rằng một mô hình ANN Fully Connected tự cài đặt bằng `NumPy` có thể đạt hiệu quả tốt trên bài toán nhận diện chữ số viết tay MNIST nếu các thành phần toán học và kỹ thuật được triển khai đầy đủ. Mô hình không phụ thuộc vào các thư viện học sâu cấp cao, vì vậy toàn bộ quá trình tính toán từ lan truyền tiến, hàm mất mát, lan truyền ngược đến cập nhật tham số đều có thể được kiểm chứng trực tiếp qua công thức và mã nguồn.
 
-> 🛑 **[HÀNH ĐỘNG]**: Khẳng định mức độ hoàn thành mục tiêu của đề tài về mô hình ANN NumPy, thực nghiệm đánh giá và dự đoán nét vẽ thực tế.
+Về mặt thực nghiệm, cấu hình cuối cùng sử dụng kiến trúc $784 \rightarrow 128 \rightarrow 10$, learning rate $\alpha = 0.1$ và $500$ iterations. Kết quả train accuracy $92.32\%$ và dev accuracy $91.93\%$ cho thấy mô hình đã học được các đặc trưng phân loại cơ bản của chữ số viết tay. Việc dev accuracy bám sát train accuracy cũng cho thấy mô hình có khả năng tổng quát hóa tương đối ổn định trên tập dev, thay vì chỉ ghi nhớ tập huấn luyện.
 
 ---
 
 ### 4.1.1. Kết quả xây dựng ANN NumPy
 
-Đề tài đã triển khai một mô hình ANN Fully Connected từ đầu bằng NumPy. Đây là kết quả quan trọng vì nó chứng minh nhóm hiểu được các bước tính toán cốt lõi của mạng nơ-ron.
+Nhóm đã xây dựng thành công một mô hình ANN Fully Connected từ đầu bằng `NumPy`. Các thành phần chính của mô hình gồm khởi tạo tham số bằng He Initialization, lan truyền tiến, hàm kích hoạt ReLU, Softmax ổn định số học, hàm mất mát Cross-Entropy, lan truyền ngược và cập nhật tham số bằng Batch Gradient Descent.
 
-> 🛑 **[HÀNH ĐỘNG]**: Tổng kết việc nhóm đã tự xây dựng đầy đủ các thành phần của ANN gồm forward, backward, loss, update và prediction.
+Ở tầng đầu vào, ảnh MNIST kích thước $28 \times 28$ được flatten thành vector $784$ chiều. Tầng ẩn gồm $128$ neuron và sử dụng ReLU để đưa tính phi tuyến vào mô hình. Tầng đầu ra gồm $10$ neuron tương ứng với $10$ lớp chữ số từ $0$ đến $9$, sử dụng Softmax để chuyển logits thành phân phối xác suất. Nhãn thật được biểu diễn bằng one-hot encoding để tính Cross-Entropy và gradient ở tầng đầu ra.
+
+Việc tự cài đặt đầy đủ các bước này giúp làm rõ bản chất toán học của mạng nơ-ron: mỗi bước forward tạo ra các đại lượng trung gian $Z^{[1]}$, $A^{[1]}$, $Z^{[2]}$, $A^{[2]}$, còn mỗi bước backward tính các gradient $dW^{[1]}$, $db^{[1]}$, $dW^{[2]}$, $db^{[2]}$ để cập nhật tham số. Đây là kết quả quan trọng về mặt học thuật vì mô hình không chỉ được sử dụng như một hộp đen, mà được triển khai và phân tích từ các phép toán ma trận cơ bản.
 
 ---
 
 ### 4.1.2. Kết quả đánh giá thực nghiệm
 
-Các kết quả thực nghiệm cho thấy mô hình có khả năng học và phân loại chữ số viết tay trên MNIST. Đồng thời, các công cụ phân tích như confusion matrix và biểu đồ học giúp chỉ ra rõ điểm mạnh, điểm yếu của mô hình.
+Kết quả thực nghiệm cho thấy mô hình ANN đạt hiệu năng tốt đối với một kiến trúc Fully Connected đơn giản. Với learning rate $\alpha = 0.1$ và $500$ iterations, mô hình đạt train accuracy $92.32\%$ và dev accuracy $91.93\%$. Chênh lệch giữa hai giá trị này chỉ khoảng $0.39\%$, cho thấy mô hình không có dấu hiệu overfitting nghiêm trọng trong cấu hình cuối cùng.
 
-> 🛑 **[HÀNH ĐỘNG]**: Tóm tắt kết quả train/dev accuracy, loss, cấu hình tốt nhất và các phát hiện chính từ confusion matrix.
+Các biểu đồ loss và accuracy cho thấy quá trình học diễn ra ổn định: loss giảm dần theo iteration, trong khi accuracy tăng dần trên cả tập train và tập dev. Confusion matrix giúp chỉ ra rằng phần lớn mẫu được phân loại đúng nằm trên đường chéo chính, đồng thời các sai số còn lại tập trung nhiều ở những cặp chữ số có hình dạng gần nhau như $4$ và $9$, $1$ và $7$, hoặc $3$ và $5$. Điều này phù hợp với giới hạn của mô hình Fully Connected khi ảnh đầu vào đã bị flatten thành vector một chiều.
 
 ---
 
 ### 4.1.3. Kết quả kiểm thử trên nét vẽ thực tế
 
-Việc kiểm thử trên nét vẽ thực tế cho thấy mô hình có thể được sử dụng cho dữ liệu ngoài MNIST nếu có pipeline tiền xử lý phù hợp. Kết quả này giúp đề tài không chỉ dừng lại ở huấn luyện trong môi trường dữ liệu chuẩn.
+Ngoài dữ liệu MNIST chuẩn, đề tài đã xây dựng hướng xử lý dữ liệu nét vẽ thực tế từ Canvas Web Demo. Đây là phần quan trọng vì ảnh người dùng tự vẽ thường không cùng phân phối với MNIST. Dữ liệu thực tế có thể khác về màu nền, độ dày nét, vị trí chữ số, kích thước vùng vẽ và mức độ nhiễu.
 
-> 🛑 **[HÀNH ĐỘNG]**: Tổng kết khả năng mô hình dự đoán ảnh người dùng tự vẽ sau khi qua pipeline tiền xử lý chuẩn hóa về dạng MNIST.
+Để giảm Data Drift giữa ảnh Canvas và ảnh MNIST, nhóm xây dựng pipeline tiền xử lý bằng `OpenCV` gồm các bước: chuyển ảnh sang grayscale, invert màu, tìm bounding box vùng chứa chữ số, crop vùng chữ số, căn giữa, resize về kích thước $28 \times 28$, normalize pixel về khoảng $[0,1]$ và flatten thành vector $784$ chiều. Pipeline này giúp ảnh vẽ thực tế trở nên tương thích hơn với đầu vào mà mô hình đã học trong quá trình huấn luyện.
+
+Kết quả này cho thấy mô hình không chỉ hoạt động trên dữ liệu CSV chuẩn, mà còn có khả năng được đưa vào một quy trình inference thực tế nếu bước tiền xử lý được thiết kế cẩn thận.
 
 ---
 
 ### 4.1.4. Đóng góp nổi bật của đề tài
 
-Đóng góp của đề tài nằm ở việc kết hợp giữa tự cài đặt mô hình, thực nghiệm có hệ thống và phân tích dữ liệu ngoài phân phối. Các đóng góp này cần được trình bày rõ ràng để làm nổi bật giá trị học thuật của bài tập lớn.
+Đóng góp thứ nhất của đề tài là tự triển khai đầy đủ mô hình ANN từ đầu bằng `NumPy`, bao gồm các thành phần cốt lõi như He Initialization, stable Softmax, Cross-Entropy và Backpropagation. Cách tiếp cận này giúp làm rõ cơ chế học của mạng nơ-ron thay vì chỉ sử dụng sẵn framework học sâu.
 
-> 🛑 **[HÀNH ĐỘNG]**: Nêu các đóng góp chính gồm tự cài đặt ANN, phân tích siêu tham số, phân tích lỗi chi tiết và thử nghiệm inference trên dữ liệu ngoài MNIST.
+Đóng góp thứ hai là thực hiện đánh giá mô hình có hệ thống thông qua train loss, dev loss, train accuracy, dev accuracy, biểu đồ học, confusion matrix và các mẫu dự đoán sai. Các kết quả này không chỉ cho biết mô hình đạt accuracy bao nhiêu, mà còn giúp phân tích mô hình sai ở đâu và vì sao sai.
+
+Đóng góp thứ ba là mở rộng bài toán từ dữ liệu MNIST chuẩn sang dữ liệu nét vẽ thực tế. Pipeline `OpenCV` cho Canvas Web Demo thể hiện nỗ lực xử lý Data Drift, một vấn đề quan trọng khi đưa mô hình học máy từ môi trường dữ liệu chuẩn sang dữ liệu do người dùng tạo ra.
 
 ---
 
 ## 4.2. Hạn chế
 
-Mọi mô hình học máy đều có giới hạn nhất định, đặc biệt khi áp dụng từ dữ liệu chuẩn sang dữ liệu thực tế. Phần này cần nêu hạn chế một cách khách quan và gắn với các bằng chứng thực nghiệm đã có.
-
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày khách quan những điểm mô hình và quy trình thực nghiệm chưa giải quyết được.
+Dù mô hình đạt kết quả tốt với cấu hình cuối cùng, đề tài vẫn tồn tại một số hạn chế về kiến trúc mô hình, phương pháp tối ưu và độ ổn định của pipeline tiền xử lý ảnh thực tế. Các hạn chế này là cơ sở để đề xuất hướng phát triển tiếp theo.
 
 ---
 
 ### 4.2.1. Hạn chế trong khả năng tổng quát hóa
 
-Mô hình được huấn luyện trên MNIST nên có thể hoạt động kém hơn khi dữ liệu đầu vào khác phân phối huấn luyện. Đây là một giới hạn quan trọng khi đưa mô hình ra kiểm thử với nét vẽ thực tế.
+Hạn chế lớn nhất của mô hình Fully Connected là ảnh hai chiều $28 \times 28$ bị flatten thành vector $784$ chiều. Quá trình này làm mất cấu trúc topo của ảnh, tức là mô hình không còn biểu diễn trực tiếp quan hệ không gian cục bộ giữa các pixel lân cận. Trong bài toán ảnh, các quan hệ như cạnh, góc, vòng khép kín hoặc nét cong thường mang ý nghĩa quan trọng, nhưng ANN Fully Connected không có cơ chế chuyên biệt để khai thác các đặc trưng cục bộ này.
 
-> 🛑 **[HÀNH ĐỘNG]**: Phân tích mô hình có thể hoạt động kém hơn khi dữ liệu đầu vào khác nhiều so với phân phối MNIST.
+Vì vậy, mô hình dễ nhầm lẫn giữa các chữ số có hình dạng tương tự. Ví dụ, số $4$ và số $9$ có thể bị nhầm nếu nét viết của số $4$ tạo vùng gần khép kín hoặc số $9$ bị viết hở. Tương tự, số $1$ và số $7$ có thể có phân bố pixel gần nhau khi số $1$ có nét nghiêng hoặc có gạch ngang. Đây là giới hạn tự nhiên của kiến trúc Fully Connected khi xử lý dữ liệu ảnh.
 
 ---
 
 ### 4.2.2. Hạn chế khi nhận diện nét vẽ ngoài phân phối MNIST
 
-Nét vẽ của người dùng có thể khác đáng kể so với dữ liệu MNIST về vị trí, độ dày và hình dạng. Những khác biệt này có thể làm mô hình dự đoán sai dù pipeline tiền xử lý đã được áp dụng.
+Mô hình được huấn luyện trên MNIST nên có thể suy giảm hiệu năng khi dữ liệu đầu vào khác đáng kể so với phân phối huấn luyện. Nét vẽ thực tế từ Canvas có thể quá mảnh, quá dày, lệch tâm, nghiêng mạnh hoặc có hình dạng không giống các mẫu MNIST. Những khác biệt này làm tăng Data Drift và khiến xác suất Softmax có thể nghiêng về lớp sai.
 
-> 🛑 **[HÀNH ĐỘNG]**: Nêu các trường hợp nét vẽ quá lệch tâm, quá mảnh, quá dày hoặc hình dạng không giống MNIST khiến mô hình dự đoán sai.
+Ngay cả khi pipeline tiền xử lý đã được áp dụng, việc chuẩn hóa ảnh thực tế về đúng phân phối MNIST vẫn không hoàn toàn bảo đảm. Nếu chữ số được viết quá nhỏ, quá sát mép vùng vẽ hoặc có nhiều nét thừa, ảnh sau crop và resize có thể khác đáng kể với ảnh huấn luyện. Điều này cho thấy mô hình cần được đánh giá thêm trên một tập dữ liệu riêng gồm các mẫu vẽ thật từ người dùng.
 
 ---
 
 ### 4.2.3. Hạn chế của quá trình Batch Gradient Descent
 
-Batch Gradient Descent dễ hiểu và phù hợp với mục tiêu nhập môn nhưng có hạn chế về chi phí tính toán. Mỗi lần cập nhật tham số cần sử dụng toàn bộ tập huấn luyện, khiến quá trình học có thể tốn thời gian.
+Batch Gradient Descent có ưu điểm là dễ hiểu và phù hợp với mục tiêu học thuật của đề tài, nhưng phương pháp này có hạn chế về tài nguyên. Ở mỗi lần cập nhật, thuật toán sử dụng toàn bộ tập huấn luyện để tính gradient. Khi số lượng mẫu tăng lên, việc lưu trữ và nhân ma trận trên toàn bộ batch có thể trở nên nặng về bộ nhớ và thời gian tính toán.
 
-> 🛑 **[HÀNH ĐỘNG]**: Phân tích Batch Gradient Descent dùng toàn bộ dữ liệu mỗi lần cập nhật nên có thể tốn thời gian và thiếu linh hoạt so với các biến thể tối ưu khác.
+Ngoài ra, Batch Gradient Descent cập nhật tham số ít thường xuyên hơn so với Mini-batch Gradient Descent hoặc Stochastic Gradient Descent. Điều này có thể làm quá trình huấn luyện kém linh hoạt hơn, đặc biệt khi mở rộng sang tập dữ liệu lớn hơn MNIST hoặc khi cần thử nhiều cấu hình siêu tham số.
 
 ---
 
 ### 4.2.4. Hạn chế của tiền xử lý ảnh vẽ tay
 
-Pipeline tiền xử lý ảnh vẽ tay có ảnh hưởng lớn đến kết quả dự đoán. Nếu bounding box, căn giữa hoặc resize không phù hợp, ảnh đầu vào cuối cùng có thể bị lệch đáng kể so với dữ liệu MNIST.
+Pipeline tiền xử lý ảnh vẽ tay phụ thuộc mạnh vào bước xác định bounding box. Nếu ảnh có nhiễu, chấm nhỏ hoặc nét thừa ở xa chữ số chính, bounding box có thể bị mở rộng sai, làm chữ số thật bị thu nhỏ sau khi resize về $28 \times 28$. Ngược lại, nếu ngưỡng phát hiện pixel nét vẽ quá chặt, một phần nét chữ có thể bị loại bỏ.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày các rủi ro như bounding box sai, căn giữa chưa tốt, resize gây méo hình hoặc invert màu không phù hợp.
+Các bước invert, crop, center và resize cũng có thể gây sai lệch nếu ảnh đầu vào không phù hợp. Ví dụ, resize có thể làm méo hình nếu tỷ lệ chữ số không được bảo toàn tốt; căn giữa sai có thể khiến chữ số lệch khỏi vùng trung tâm; còn nhiễu nhỏ từ thao tác vẽ của người dùng có thể làm mô hình nhận nhầm đặc trưng. Do đó, chất lượng preprocessing là yếu tố quyết định khi triển khai mô hình trên dữ liệu thực tế.
 
 ---
 
 ## 4.3. Hướng phát triển
 
-Hướng phát triển cần xuất phát từ các hạn chế đã nêu, không mở rộng lan man ra ngoài phạm vi đề tài. Các đề xuất nên tập trung vào cải thiện mô hình hiện tại, tiền xử lý ảnh và quy trình đánh giá.
-
-> 🛑 **[HÀNH ĐỘNG]**: Đề xuất các hướng cải thiện vẫn bám sát phạm vi đề tài ANN và tiền xử lý ảnh, không mở rộng lan man sang mô hình ngoài phạm vi.
+Các hướng phát triển tiếp theo cần tập trung vào việc cải thiện độ ổn định của pipeline tiền xử lý, tăng khả năng đánh giá trên dữ liệu thực tế, tối ưu tốc độ inference và bổ sung công cụ giải thích dự đoán. Những hướng này bám sát phạm vi đề tài và trực tiếp giải quyết các hạn chế đã phân tích.
 
 ---
 
 ### 4.3.1. Tăng độ ổn định của pipeline tiền xử lý ảnh
 
-Cải thiện preprocessing là hướng phát triển trực tiếp giúp tăng khả năng nhận diện trên nét vẽ thực tế. Các bước như crop, center, resize và normalize cần được tối ưu để giảm sai lệch phân phối.
+Hướng cải tiến đầu tiên là bổ sung bước giảm nhiễu trước khi xác định bounding box. Cụ thể, có thể áp dụng Gaussian Blur hoặc các kỹ thuật lọc nhiễu nhẹ để giảm ảnh hưởng của các chấm nhỏ, nét thừa và nhiễu rời rạc trong ảnh Canvas. Khi nhiễu được xử lý trước, bounding box sẽ có khả năng bao quanh chữ số chính xác hơn.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đề xuất cải thiện crop, center, resize, normalize và chuẩn hóa độ dày nét để ảnh vẽ thực tế gần với MNIST hơn.
+Ngoài ra, pipeline có thể được cải thiện bằng cách chuẩn hóa độ dày nét, giữ tỷ lệ hình học khi resize và thêm padding trước khi đưa ảnh về kích thước $28 \times 28$. Các cải tiến này giúp ảnh vẽ thực tế gần hơn với phân phối MNIST, từ đó tăng độ ổn định của inference.
 
 ---
 
 ### 4.3.2. Bổ sung bộ dữ liệu kiểm thử từ nét vẽ người dùng
 
-Một bộ dữ liệu kiểm thử từ nét vẽ thật sẽ giúp đánh giá khách quan hơn khả năng hoạt động ngoài MNIST. Dữ liệu này có thể được dùng để phân tích lỗi và cải thiện pipeline tiền xử lý.
+Một hướng phát triển quan trọng là xây dựng bộ dữ liệu `Dev_Canvas` gồm các mẫu chữ số do người dùng thật vẽ trên Web Demo. Bộ dữ liệu này nên chứa đủ $10$ lớp chữ số, nhiều phong cách viết khác nhau và các trường hợp khó như lệch tâm, nét mảnh, nét dày hoặc chữ số có hình dạng không chuẩn.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đề xuất thu thập thêm mẫu vẽ thật từ nhiều người để đánh giá khách quan khả năng tổng quát hóa.
+Việc có `Dev_Canvas` giúp đánh giá khách quan hơn khả năng tổng quát hóa của mô hình ra ngoài MNIST. Thay vì chỉ quan sát từng ví dụ riêng lẻ, nhóm có thể tính accuracy, confusion matrix và phân tích lỗi trên dữ liệu Canvas. Đây cũng là cơ sở để điều chỉnh pipeline preprocessing và lựa chọn cấu hình mô hình phù hợp hơn với dữ liệu thực tế.
 
 ---
 
 ### 4.3.3. Tối ưu tốc độ dự đoán real-time
 
-Tốc độ dự đoán là yếu tố quan trọng khi kiểm thử bằng nét vẽ người dùng. Quá trình inference và tiền xử lý cần được tối ưu để phản hồi nhanh mà vẫn giữ được chất lượng đầu vào.
+Khi triển khai dưới dạng Web Demo, tốc độ phản hồi là yếu tố quan trọng. Hướng tối ưu cần tập trung vào việc tổ chức inference sao cho mô hình không phải tải lại trọng số sau mỗi request. Nếu triển khai bằng `FastAPI` hoặc `Flask`, các trọng số $W^{[1]}$, $b^{[1]}$, $W^{[2]}$, $b^{[2]}$ nên được load một lần khi server khởi động và giữ trong bộ nhớ để phục vụ các lần dự đoán tiếp theo.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đề xuất tránh tải lại trọng số nhiều lần, tối ưu phép tính ma trận và giảm chi phí tiền xử lý để dự đoán nhanh hơn.
+Bên cạnh đó, cần tối ưu pipeline tiền xử lý để tránh các thao tác ảnh không cần thiết. Các phép toán ma trận trong inference nên được vector hóa bằng `NumPy`, còn các bước xử lý ảnh bằng `OpenCV` nên được thiết kế gọn để giảm latency. Cách triển khai này giúp hệ thống phản hồi gần real-time khi người dùng vẽ chữ số trên Canvas.
 
 ---
 
 ### 4.3.4. Cải thiện khả năng giải thích kết quả dự đoán
 
-Khả năng giải thích giúp người đọc và người dùng hiểu vì sao mô hình đưa ra một dự đoán nhất định. Các công cụ trực quan như xác suất Softmax, ảnh sau preprocessing và mẫu lỗi có thể hỗ trợ mục tiêu này.
+Để tăng khả năng giải thích, hệ thống có thể bổ sung các biểu đồ xác suất Softmax cho từng mẫu đầu vào. Biểu đồ này cho biết mô hình tự tin nhất vào lớp nào và các lớp nào đang cạnh tranh với lớp dự đoán. Khi mô hình dự đoán sai, phân phối Softmax cũng giúp nhận diện liệu mô hình sai do nhầm lẫn rõ ràng hay do không chắc chắn giữa nhiều lớp.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đề xuất trực quan hóa xác suất Softmax, mẫu sai, trọng số đầu vào và ảnh sau tiền xử lý để người đọc hiểu vì sao mô hình dự đoán như vậy.
+Ngoài ra, có thể bổ sung activation heatmaps hoặc trực quan hóa vùng ảnh có ảnh hưởng mạnh đến dự đoán. Với mô hình Fully Connected, có thể khảo sát activation của tầng ẩn hoặc reshape một số vector trọng số đầu vào về dạng ảnh $28 \times 28$. Những công cụ này giúp người đọc hiểu rõ hơn mô hình đang phản ứng với những đặc trưng nào của chữ số.
 
 ---
 
 # Tài liệu tham khảo
 
-Tài liệu tham khảo cần được trình bày thống nhất theo chuẩn trích dẫn học thuật. Các nguồn được sử dụng nên có độ tin cậy cao và liên quan trực tiếp đến MNIST, neural network, lan truyền ngược, NumPy và xử lý ảnh.
+[1] Y. LeCun, C. Cortes, and C. J. C. Burges, "The MNIST database of handwritten digits," 1998. [Online]. Available: http://yann.lecun.com/exdb/mnist/
 
-> 🛑 **[HÀNH ĐỘNG]**: Liệt kê tài liệu theo chuẩn IEEE, ưu tiên nguồn chính thống về MNIST, neural network, backpropagation, NumPy, Softmax, Cross-Entropy và xử lý ảnh cơ bản.
+[2] K. He, X. Zhang, S. Ren, and J. Sun, "Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification," in *Proceedings of the IEEE International Conference on Computer Vision (ICCV)*, 2015.
+
+[3] NumPy Developers, "NumPy Documentation," [Online]. Available: https://numpy.org/doc/
+
+[4] OpenCV Team, "OpenCV Documentation," [Online]. Available: https://docs.opencv.org/
+
+[5] Học viện Công nghệ Bưu chính Viễn thông, "Bài giảng Nhập môn Trí tuệ nhân tạo," Khoa Công nghệ thông tin 1, PTIT.
 
 ---
 
 # Phụ lục
 
-Phụ lục chứa các nội dung kỹ thuật dài hoặc chi tiết bổ trợ cho phần chính của báo cáo. Các nội dung trong phụ lục cần được liên hệ với phần thân báo cáo khi cần thiết.
-
-> 🛑 **[HÀNH ĐỘNG]**: Đưa các nội dung kỹ thuật dài như mã nguồn, bảng kết quả đầy đủ, ảnh minh họa bổ sung và log huấn luyện.
+Phụ lục trình bày các nội dung kỹ thuật bổ trợ cho phần chính của báo cáo, gồm mã nguồn huấn luyện, bảng kết quả thực nghiệm, hình minh họa confusion matrix, pipeline tiền xử lý ảnh vẽ tay và kết quả kiểm thử Web Demo. Các nội dung này giúp người đọc kiểm chứng chi tiết hơn quá trình triển khai và đánh giá mô hình.
 
 ---
 
 ## Phụ lục A. Mã nguồn huấn luyện ANN
 
-Phụ lục này trình bày các đoạn mã nguồn quan trọng nhất phục vụ quá trình huấn luyện mô hình. Mã nguồn cần được chọn lọc, có chú thích ngắn gọn và không làm rối phần nội dung chính.
+Phụ lục này lưu phần mã nguồn chính của mô hình ANN, bao gồm đọc dữ liệu, chuẩn hóa dữ liệu, khởi tạo tham số, lan truyền tiến, tính loss, lan truyền ngược, cập nhật tham số và lưu mô hình. Mã nguồn đầy đủ được đặt trong file `ann.py`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đưa các đoạn code chính của mô hình gồm đọc dữ liệu, khởi tạo tham số, forward propagation, backward propagation, update và save model.
+```python
+[Chèn code ann.py]
+```
 
 ---
 
 ## Phụ lục B. Bảng kết quả thực nghiệm đầy đủ
 
-Phụ lục này lưu trữ các bảng kết quả chi tiết của toàn bộ thí nghiệm. Nội dung giúp người đọc kiểm chứng các nhận xét đã được rút ra trong Chương 3.
+Phụ lục này tổng hợp bảng kết quả theo các cấu hình learning rate. Cấu hình $\alpha = 0.1$ là cấu hình cuối cùng được sử dụng trong báo cáo; các cấu hình $\alpha = 0.01$ và $\alpha = 0.5$ cần được điền thêm sau khi chạy thực nghiệm tương ứng.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đưa bảng đầy đủ các lần thử learning rate, số neuron tầng ẩn, số iteration, loss, accuracy và thời gian huấn luyện nếu có.
+| Learning rate $\alpha$ | Hidden size | Iterations | Train accuracy | Dev accuracy | Ghi chú |
+|---:|---:|---:|---:|---:|---|
+| 0.01 | 128 | 500 | [Điền số] | [Điền số] | Cần chạy bổ sung để so sánh tốc độ hội tụ. |
+| 0.1 | 128 | 500 | 92.32% | 91.93% | Cấu hình cuối cùng, hội tụ tốt, không overfitting nghiêm trọng. |
+| 0.5 | 128 | 500 | [Điền số] | [Điền số] | Cần chạy bổ sung để kiểm tra dao động hoặc mất ổn định. |
 
 ---
 
 ## Phụ lục C. Confusion matrix và ảnh dự đoán sai bổ sung
 
-Phụ lục này bổ sung các hình ảnh và ma trận lỗi không đưa hết vào phần thân báo cáo. Các dữ liệu bổ sung này hỗ trợ phân tích lỗi và làm rõ hạn chế của mô hình.
+Phụ lục này bổ sung hình confusion matrix và các mẫu dự đoán sai để hỗ trợ phân tích lỗi. Các hình này giúp đối chiếu trực quan giữa kết quả định lượng và các trường hợp chữ số dễ nhầm.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đưa thêm các confusion matrix hoặc ảnh sai chưa chèn trong Chương 3 để hỗ trợ phân tích lỗi.
+![Confusion matrix bổ sung](images/confusion_matrix.png)
+
+![Các mẫu dự đoán sai bổ sung](images/misclassified_samples.png)
 
 ---
 
 ## Phụ lục D. Minh họa pipeline tiền xử lý nét vẽ thực tế
 
-Phụ lục này trình bày chi tiết các bước chuyển đổi ảnh vẽ thực tế về định dạng đầu vào của mô hình. Chuỗi hình minh họa cần cho thấy rõ sự thay đổi của ảnh qua từng bước xử lý.
+Phụ lục này minh họa pipeline tiền xử lý ảnh Canvas bằng `OpenCV`. Chuỗi xử lý gồm grayscale, invert, bounding box crop, center, resize về $28 \times 28$, normalize và flatten thành vector $784$ chiều.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đưa chuỗi ảnh minh họa từng bước từ ảnh vẽ gốc đến ảnh $28 \times 28$ và vector đầu vào.
+![Ảnh vẽ gốc từ Canvas](images/canvas_raw.png)
+
+![Ảnh sau grayscale và invert](images/canvas_grayscale_invert.png)
+
+![Ảnh sau bounding box crop và căn giữa](images/canvas_crop_center.png)
+
+![Ảnh sau resize về 28x28](images/canvas_28x28.png)
 
 ---
 
 ## Phụ lục E. Kết quả kiểm thử trên nét vẽ thực tế
 
-Phụ lục này tổng hợp các mẫu kiểm thử từ nét vẽ người dùng và kết quả dự đoán tương ứng. Bảng kiểm thử cần thể hiện cả các trường hợp đúng và sai để đánh giá khách quan.
+Phụ lục này tổng hợp một số mẫu kiểm thử từ Web Demo. Bảng cần thể hiện ảnh người dùng vẽ, ảnh sau tiền xử lý, nhãn dự đoán, xác suất Softmax cao nhất và nhận xét đúng/sai.
 
-> 🛑 **[HÀNH ĐỘNG]**: Đưa bảng gồm ảnh người dùng vẽ, ảnh sau tiền xử lý, nhãn dự đoán, xác suất Softmax cao nhất và nhận xét đúng/sai.
+![Kết quả kiểm thử nét vẽ thực tế](images/canvas_prediction_results.png)
