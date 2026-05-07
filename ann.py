@@ -96,13 +96,22 @@ def get_accuracy(predictions, Y):
     return np.sum(predictions == Y) / Y.size
 
 
-def gradient_descent(X, Y, alpha, iterations):
+def get_learning_rate(iteration):
+    if iteration < 400:
+        return 0.5
+    if iteration < 800:
+        return 0.2
+    return 0.05
+
+
+def gradient_descent(X, Y, iterations=1200):
     W1, b1, W2, b2 = init_params()
 
     # Tạo dictionary để lưu lịch sử
-    history = {'train_loss': [], 'dev_loss': [], 'train_acc': [], 'dev_acc': [], 'iter': []}
+    history = {'train_loss': [], 'dev_loss': [], 'train_acc': [], 'dev_acc': [], 'iter': [], 'alpha': []}
 
     for i in range(iterations):
+        alpha = get_learning_rate(i)
         Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, X)
         dW1, db1, dW2, db2 = backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y)
         W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
@@ -118,10 +127,11 @@ def gradient_descent(X, Y, alpha, iterations):
             dev_acc = get_accuracy(dev_pred, Y_dev)
 
             print(
-                f"Iter: {i} | Train Loss: {train_loss:.4f} | Dev Loss: {dev_loss:.4f} | Train Acc: {train_acc:.4f} | Dev Acc: {dev_acc:.4f}")
+                f"Iter: {i} | Alpha: {alpha:.4f} | Train Loss: {train_loss:.4f} | Dev Loss: {dev_loss:.4f} | Train Acc: {train_acc:.4f} | Dev Acc: {dev_acc:.4f}")
 
             # Lưu vào mảng
             history['iter'].append(i)
+            history['alpha'].append(alpha)
             history['train_loss'].append(train_loss)
             history['dev_loss'].append(dev_loss)
             history['train_acc'].append(train_acc)
@@ -192,14 +202,16 @@ def generate_confusion_matrix_and_errors(W1, b1, W2, b2):
 
 
 # --- THỰC THI CHÍNH ---
-if not os.path.exists("model_weights.npz"):
+if __name__ == "__main__":
+    if os.path.exists("model_weights.npz"):
+        os.remove("model_weights.npz")
+        print("Removed old model_weights.npz. Training a fresh model on train.csv...")
+
     print("Training model...")
-    W1, b1, W2, b2, history = gradient_descent(X_train, Y_train, 0.5, 500)
+    W1, b1, W2, b2, history = gradient_descent(X_train, Y_train, iterations=1200)
     save_model(W1, b1, W2, b2)
     # Gen ảnh biểu đồ
     plot_and_save_metrics(history)
     # Gen ma trận và ảnh sai
     generate_confusion_matrix_and_errors(W1, b1, W2, b2)
-else:
-    print("Model found. To generate graphs, please delete 'model_weights.npz' and run again.")
 
