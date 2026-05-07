@@ -20,6 +20,9 @@ env/
 *.tmp
 *.temp
 
+# Trained model weights generated locally
+*.npz
+
 # OS files
 .DS_Store
 Thumbs.db
