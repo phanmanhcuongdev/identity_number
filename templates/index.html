@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MNIST Digit Recognizer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #1f2933;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(92vw, 520px);
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+      padding: 28px;
+      background: #ffffff;
+      border: 1px solid #d9e2ec;
+      border-radius: 8px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    canvas {
+      width: 300px;
+      height: 300px;
+      background: #ffffff;
+      border: 2px solid #334e68;
+      border-radius: 8px;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      min-width: 112px;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #ffffff;
+      background: #2563eb;
+    }
+
+    button.secondary {
+      background: #52606d;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .result {
+      min-height: 70px;
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .digit {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .confidence {
+      color: #52606d;
+      font-size: 15px;
+    }
+
+    .error {
+      color: #b42318;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Nhận diện chữ số viết tay</h1>
+
+    <canvas id="drawCanvas" width="300" height="300" aria-label="Bảng vẽ chữ số"></canvas>
+
+    <div class="controls">
+      <button class="secondary" id="clearBtn" type="button">Clear</button>
+      <button id="predictBtn" type="button">Predict</button>
+    </div>
+
+    <section class="result" aria-live="polite">
+      <div id="prediction" class="digit">-</div>
+      <div id="confidence" class="confidence">Vẽ một chữ số rồi bấm Predict</div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const clearBtn = document.getElementById('clearBtn');
+    const predictBtn = document.getElementById('predictBtn');
+    const predictionEl = document.getElementById('prediction');
+    const confidenceEl = document.getElementById('confidence');
+
+    let isDrawing = false;
+
+    function resetCanvas() {
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 15;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    function getPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const source = event.touches ? event.touches[0] : event;
+      return {
+        x: (source.clientX - rect.left) * (canvas.width / rect.width),
+        y: (source.clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+
+    function startDrawing(event) {
+      event.preventDefault();
+      isDrawing = true;
+      const point = getPoint(event);
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y);
+    }
+
+    function draw(event) {
+      if (!isDrawing) return;
+      event.preventDefault();
+      const point = getPoint(event);
+      ctx.lineTo(point.x, point.y);
+      ctx.stroke();
+    }
+
+    function stopDrawing(event) {
+      if (event) event.preventDefault();
+      isDrawing = false;
+      ctx.closePath();
+    }
+
+    async function predictDigit() {
+      predictBtn.disabled = true;
+      predictionEl.textContent = '-';
+      confidenceEl.className = 'confidence';
+      confidenceEl.textContent = 'Đang dự đoán...';
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: canvas.toDataURL('image/png') }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Không thể dự đoán');
+        }
+
+        predictionEl.textContent = data.prediction;
+        confidenceEl.textContent = `Confidence: ${(data.confidence * 100).toFixed(2)}%`;
+      } catch (error) {
+        confidenceEl.className = 'confidence error';
+        confidenceEl.textContent = error.message;
+      } finally {
+        predictBtn.disabled = false;
+      }
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+    clearBtn.addEventListener('click', () => {
+      resetCanvas();
+      predictionEl.textContent = '-';
+      confidenceEl.className = 'confidence';
+      confidenceEl.textContent = 'Vẽ một chữ số rồi bấm Predict';
+    });
+
+    predictBtn.addEventListener('click', predictDigit);
+
+    resetCanvas();
+  </script>
+</body>
+</html>
