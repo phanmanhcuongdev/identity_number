@@ -2,226 +2,234 @@
 
 ## Đề tài: Nhận diện chữ số viết tay MNIST sử dụng mạng nơ-ron Fully Connected code từ đầu bằng NumPy
 
-> 🛑 **[HÀNH ĐỘNG]**: Hoàn thiện toàn bộ báo cáo theo đúng cấu trúc dưới đây, bảo đảm văn phong học thuật, trình bày rõ ràng, có hình ảnh, bảng biểu, công thức, kết quả thực nghiệm và phân tích lỗi đầy đủ.
+Báo cáo trình bày quá trình xây dựng, huấn luyện và đánh giá mô hình mạng nơ-ron nhân tạo Fully Connected cho bài toán nhận diện chữ số viết tay MNIST. Mô hình được cài đặt từ đầu bằng `NumPy`, không sử dụng framework học sâu bậc cao, nhằm làm rõ bản chất của các bước lan truyền tiến, lan truyền ngược, tính hàm mất mát và cập nhật tham số. Bên cạnh phần thực nghiệm trên dữ liệu MNIST, đề tài còn định hướng tích hợp Web Demo để kiểm thử khả năng nhận diện trên nét vẽ thực tế của người dùng.
 
 ---
 
 # Phần mở đầu
 
-Phần mở đầu có vai trò chuẩn hóa hình thức báo cáo trước khi đi vào nội dung chuyên môn. Các thành phần trong phần này cần được trình bày thống nhất, đầy đủ và đúng quy cách của mẫu báo cáo bài tập lớn.
-
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày các thành phần chuẩn của báo cáo gồm bìa, phân công nhiệm vụ, lời cảm ơn, mục lục, danh mục hình, danh mục bảng và danh mục thuật ngữ viết tắt.
+Phần mở đầu cung cấp các thông tin hành chính, hình thức và định hướng tổng quan của báo cáo. Các nội dung như trang bìa, phân công nhiệm vụ, lời cảm ơn, mục lục và các danh mục được trình bày nhằm bảo đảm báo cáo có cấu trúc rõ ràng trước khi đi vào phần chuyên môn. Đây là cơ sở để người đọc nắm được thông tin nhóm thực hiện, phạm vi đề tài và cách tổ chức tài liệu.
 
 ---
 
 ## Trang bìa
 
-Trang bìa là phần nhận diện chính thức của báo cáo, thể hiện thông tin về học phần, đề tài, nhóm thực hiện và giảng viên hướng dẫn. Nội dung trang bìa cần được trình bày trang trọng, rõ ràng và không thêm các thông tin ngoài phạm vi yêu cầu.
+**Học viện Công nghệ Bưu chính Viễn thông**  
+**Khoa Công nghệ thông tin 1**
 
-> 🛑 **[HÀNH ĐỘNG]**: Ghi đầy đủ tên học viện, khoa, môn học, tên đề tài, lớp, nhóm, giảng viên hướng dẫn và danh sách sinh viên thực hiện.
+**BÁO CÁO BÀI TẬP LỚN**  
+**Môn học:** Nhập môn Trí tuệ Nhân tạo
+
+**Đề tài:** Nhận diện chữ số viết tay MNIST sử dụng mạng nơ-ron Fully Connected code từ đầu bằng NumPy  
+**Mở rộng:** Kèm tính năng Web Demo nhận diện nét vẽ thực tế
+
+**Lớp:** N09  
+**Nhóm:** 01  
+**Giảng viên hướng dẫn:** ThS. Vũ Hoài Thư
+
+**Thành viên thực hiện:**
+
+| STT | Họ và tên | Mã sinh viên | Vai trò chính |
+|---:|---|---|---|
+| 1 | Phan Mạnh Cường | B23DCCN115 | Core ANN, xử lý dữ liệu, thực nghiệm |
+| 2 | Nguyễn Tuấn Dũng | B23DCCN203 | Lan truyền tiến, trực quan hóa |
+| 3 | Trương Minh Sơn | B23DCCN726 | Lan truyền ngược, toán học |
+| 4 | Đàm Quang Phong | B23DCCN642 | Lan truyền ngược, đánh giá |
+
+**Hà Nội, 2026**
 
 ---
 
 ## Phân công nhiệm vụ
 
-Phần phân công nhiệm vụ giúp thể hiện vai trò của từng thành viên trong quá trình thực hiện đề tài. Nội dung nên được trình bày dưới dạng bảng để người đọc dễ theo dõi mức độ đóng góp của từng thành viên.
+Quá trình thực hiện đề tài được phân chia theo các nhóm công việc chính gồm xây dựng mô hình, xử lý dữ liệu, triển khai thuật toán, đánh giá thực nghiệm và trình bày báo cáo. Việc phân công nhiệm vụ giúp bảo đảm mỗi thành viên có trách nhiệm rõ ràng, đồng thời tạo điều kiện để các phần lý thuyết, cài đặt và thực nghiệm được liên kết thống nhất.
 
-> 🛑 **[HÀNH ĐỘNG]**: Lập bảng phân công rõ từng thành viên phụ trách các phần như lý thuyết ANN, lan truyền tiến, lan truyền ngược, thực nghiệm, phân tích lỗi và demo dự đoán nét vẽ.
+| STT | Thành viên | Mã sinh viên | Nhiệm vụ phụ trách |
+|---:|---|---|---|
+| 1 | Phan Mạnh Cường | B23DCCN115 | Thiết kế lõi ANN bằng `NumPy`, xử lý dữ liệu MNIST, tổ chức thực nghiệm và tổng hợp kết quả huấn luyện |
+| 2 | Nguyễn Tuấn Dũng | B23DCCN203 | Phân tích và trình bày lan truyền tiến, hỗ trợ trực quan hóa kết quả, biểu đồ và minh họa dự đoán |
+| 3 | Trương Minh Sơn | B23DCCN726 | Phân tích lan truyền ngược, hệ thống hóa công thức toán học, kiểm tra tính đúng đắn của gradient |
+| 4 | Đàm Quang Phong | B23DCCN642 | Phân tích lan truyền ngược, đánh giá mô hình, nhận xét kết quả và hỗ trợ phân tích lỗi |
 
 ---
 
 ## Lời cảm ơn
 
-Lời cảm ơn là phần thể hiện thái độ nghiêm túc và sự ghi nhận đối với những cá nhân, tổ chức đã hỗ trợ quá trình thực hiện bài tập lớn. Nội dung cần ngắn gọn, khách quan và tránh các câu sáo rỗng hoặc cảm xúc quá mức.
-
-> 🛑 **[HÀNH ĐỘNG]**: Viết ngắn gọn 100–150 từ, cảm ơn giảng viên hướng dẫn, nhà trường và các thành viên đã phối hợp thực hiện đề tài.
+Nhóm thực hiện xin gửi lời cảm ơn chân thành đến ThS. Vũ Hoài Thư, giảng viên hướng dẫn học phần Nhập môn Trí tuệ Nhân tạo, đã định hướng nội dung, cung cấp nền tảng lý thuyết và hỗ trợ nhóm trong quá trình triển khai bài tập lớn. Nhóm cũng xin cảm ơn Học viện Công nghệ Bưu chính Viễn thông và Khoa Công nghệ thông tin 1 đã tạo điều kiện học tập, thực hành và nghiên cứu trong suốt quá trình thực hiện đề tài. Bên cạnh đó, các thành viên trong nhóm đã phối hợp trong việc phân tích thuật toán, cài đặt mô hình, kiểm thử và hoàn thiện báo cáo. Những đóng góp này là cơ sở quan trọng giúp nhóm hoàn thành đề tài một cách nghiêm túc và có hệ thống.
 
 ---
 
 ## Mục lục
 
-Mục lục giúp người đọc nắm được cấu trúc tổng thể của báo cáo và nhanh chóng tra cứu các phần nội dung. Khi hoàn thiện báo cáo, mục lục cần được cập nhật theo đúng số trang và đúng thứ bậc tiêu đề.
-
-> 🛑 **[HÀNH ĐỘNG]**: Tự động liệt kê đầy đủ các chương, mục và tiểu mục theo đúng cấu trúc báo cáo.
+Mục lục sẽ được tạo tự động bởi LaTeX.
 
 ---
 
 ## Danh mục hình vẽ
 
-Danh mục hình vẽ giúp hệ thống hóa các hình minh họa, biểu đồ và sơ đồ được sử dụng trong báo cáo. Mỗi hình được đưa vào báo cáo phải có chú thích rõ ràng và được nhắc tới trong phần nội dung.
-
-> 🛑 **[HÀNH ĐỘNG]**: Liệt kê các hình như sơ đồ kiến trúc ANN, biểu đồ loss/accuracy, confusion matrix, ảnh dự đoán sai và pipeline xử lý ảnh vẽ tay.
+Danh mục hình vẽ sẽ được tạo tự động bởi LaTeX.
 
 ---
 
 ## Danh mục bảng biểu
 
-Danh mục bảng biểu giúp tổng hợp các bảng dữ liệu, bảng cấu hình và bảng kết quả thực nghiệm. Các bảng cần có tên rõ ràng, trình bày thống nhất và được phân tích trong phần nội dung chính.
-
-> 🛑 **[HÀNH ĐỘNG]**: Liệt kê các bảng như bảng kích thước ma trận, bảng hyperparameter, bảng kết quả theo iteration và bảng so sánh cấu hình.
+Danh mục bảng biểu sẽ được tạo tự động bởi LaTeX.
 
 ---
 
 ## Danh mục thuật ngữ và từ viết tắt
 
-Danh mục thuật ngữ và từ viết tắt giúp người đọc hiểu nhất quán các khái niệm kỹ thuật được sử dụng trong báo cáo. Các thuật ngữ nên được giải thích ngắn gọn, chính xác và bám sát nội dung đề tài.
-
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích các thuật ngữ như ANN, MNIST, ReLU, Softmax, Cross-Entropy, BGD, Accuracy, Confusion Matrix và Bounding Box.
+Danh mục thuật ngữ và từ viết tắt sẽ được tạo tự động bởi LaTeX.
 
 ---
 
 # Chương 1. Giới thiệu đề tài
 
-Chương này trình bày bối cảnh hình thành đề tài, mục tiêu nghiên cứu, phạm vi thực hiện và định hướng giải pháp tổng quát. Nội dung cần được viết theo mạch lập luận từ vấn đề thực tế đến phương pháp tiếp cận, không đi quá sâu vào chi tiết thuật toán.
-
-> 🛑 **[HÀNH ĐỘNG]**: Dẫn dắt bài toán nhận diện chữ số viết tay, xác định mục tiêu, phạm vi, định hướng giải pháp và bố cục báo cáo.
+Chương 1 trình bày bối cảnh hình thành đề tài, mục tiêu nghiên cứu, phạm vi thực hiện và định hướng giải pháp tổng quát. Nội dung chương được xây dựng theo trình tự từ nhu cầu thực tế của bài toán nhận diện chữ số viết tay đến lý do lựa chọn mạng nơ-ron Fully Connected tự cài đặt bằng `NumPy`. Chương này cũng nêu rõ cách nhóm tổ chức quá trình thực nghiệm, đánh giá mô hình và mở rộng kiểm thử bằng Web Demo nhận diện nét vẽ thực tế.
 
 ---
 
 ## 1.1. Đặt vấn đề
 
-Nhận diện chữ số viết tay là một bài toán cơ bản nhưng có ý nghĩa quan trọng trong lĩnh vực thị giác máy tính và học máy. Phần này cần làm rõ vì sao bài toán có giá trị thực tiễn và vì sao nó phù hợp với học phần Nhập môn Trí tuệ Nhân tạo.
+Nhận diện chữ số viết tay là một bài toán kinh điển trong lĩnh vực trí tuệ nhân tạo, học máy và thị giác máy tính. Mặc dù bài toán đã được nghiên cứu rộng rãi, nó vẫn có giá trị học thuật cao vì cho phép người học tiếp cận đầy đủ quy trình xây dựng một mô hình học máy: biểu diễn dữ liệu, thiết kế mô hình, lan truyền tiến, tính sai số, lan truyền ngược, cập nhật tham số và đánh giá kết quả. Trong phạm vi học phần Nhập môn Trí tuệ Nhân tạo, bài toán này phù hợp để minh họa mối liên hệ giữa công thức toán học và triển khai chương trình thực tế.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày bối cảnh số hóa dữ liệu viết tay và nhu cầu tự động nhận diện chữ số trong các hệ thống xử lý thông tin.
+Với dữ liệu MNIST, mỗi ảnh chữ số viết tay được chuẩn hóa về kích thước $28 \times 28$ và có nhãn thuộc một trong 10 lớp chữ số từ $0$ đến $9$. Đề tài lựa chọn mô hình mạng nơ-ron Fully Connected nhằm tập trung vào cơ chế cơ bản của ANN trước khi mở rộng sang các kiến trúc phức tạp hơn. Việc tự cài đặt mô hình bằng `NumPy` giúp nhóm hiểu rõ bản chất tính toán thay vì chỉ sử dụng các thư viện học sâu có sẵn.
 
 ---
 
 ### 1.1.1. Bài toán nhận diện chữ số viết tay trong thực tế
 
-Trong nhiều hệ thống xử lý thông tin, dữ liệu viết tay vẫn xuất hiện dưới nhiều dạng khác nhau và cần được chuyển đổi sang dữ liệu số. Việc tự động nhận diện chữ số giúp giảm thao tác nhập liệu thủ công và hạn chế sai sót do con người.
+Trong thực tế, chữ số viết tay xuất hiện trong nhiều dạng tài liệu như biểu mẫu khảo sát, phiếu đăng ký, mã bưu chính, số tiền trên chứng từ, mã định danh, phiếu điểm hoặc các tài liệu hành chính cần số hóa. Nếu các thông tin này được nhập thủ công, quá trình xử lý có thể tốn thời gian và dễ phát sinh sai sót. Do đó, việc tự động nhận diện chữ số viết tay có ý nghĩa trong các hệ thống cần chuyển đổi dữ liệu từ dạng giấy hoặc ảnh sang dữ liệu số.
 
-> 🛑 **[HÀNH ĐỘNG]**: Phân tích các tình huống như biểu mẫu, mã bưu chính, số tiền, mã định danh hoặc phiếu khảo sát cần nhận diện chữ số viết tay.
+Bài toán nhận diện chữ số viết tay yêu cầu mô hình tiếp nhận ảnh đầu vào và đưa ra nhãn dự đoán tương ứng. Khó khăn của bài toán nằm ở sự đa dạng của nét viết, độ nghiêng, độ dày nét, vị trí chữ số trong khung ảnh và phong cách cá nhân của người viết. Đây là lý do các phương pháp học máy, đặc biệt là mạng nơ-ron nhân tạo, phù hợp hơn so với cách xây dựng luật thủ công cố định.
 
 ---
 
 ### 1.1.2. Nhu cầu trực quan hóa mô hình nhận diện cho người dùng
 
-Một mô hình học máy không chỉ cần đạt kết quả định lượng trên tập dữ liệu chuẩn mà còn cần được kiểm chứng qua các tình huống đầu vào trực quan. Việc cho phép người dùng tự vẽ chữ số giúp quá trình đánh giá trở nên sinh động và gần với thực tế hơn.
+Bên cạnh việc đánh giá mô hình trên tập dữ liệu chuẩn, việc trực quan hóa quá trình dự đoán giúp người dùng hiểu rõ hơn cách mô hình hoạt động. Các chỉ số như loss và accuracy cung cấp đánh giá định lượng, nhưng chưa thể hiện đầy đủ hành vi của mô hình trên từng mẫu cụ thể. Vì vậy, việc hiển thị ảnh đầu vào, nhãn dự đoán, xác suất đầu ra và các trường hợp dự đoán sai là cần thiết để phân tích mô hình một cách trực quan.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích vì sao ngoài việc đánh giá bằng tập dữ liệu chuẩn, cần có cách kiểm thử trực quan bằng nét vẽ thực tế của người dùng.
+Đề tài định hướng bổ sung Web Demo cho phép người dùng tự vẽ chữ số và quan sát kết quả dự đoán. Tính năng này giúp kiểm thử mô hình trên dữ liệu gần với tình huống thực tế hơn so với dữ liệu MNIST đã được chuẩn hóa. Đồng thời, Web Demo cũng làm rõ vai trò của tiền xử lý ảnh như chuyển ảnh về grayscale, chuẩn hóa kích thước, căn giữa chữ số, normalize pixel và flatten thành vector đầu vào.
 
 ---
 
 ### 1.1.3. Ý nghĩa của việc tự cài đặt ANN thay vì dùng framework
 
-Việc tự cài đặt mạng nơ-ron bằng NumPy giúp làm rõ bản chất toán học và quy trình học của mô hình. Thay vì sử dụng các thư viện học sâu có sẵn, đề tài tập trung vào việc hiểu từng bước tính toán bên trong mô hình.
+Việc tự cài đặt mạng nơ-ron bằng `NumPy` có ý nghĩa quan trọng về mặt học thuật. Khi không sử dụng các framework học sâu như TensorFlow, Keras hoặc PyTorch, nhóm phải trực tiếp triển khai từng bước của thuật toán, bao gồm khởi tạo trọng số, lan truyền tiến, hàm kích hoạt, Softmax, Cross-Entropy Loss, lan truyền ngược và cập nhật tham số bằng Gradient Descent.
 
-> 🛑 **[HÀNH ĐỘNG]**: Làm rõ giá trị học thuật của việc tự triển khai lan truyền tiến, lan truyền ngược và cập nhật trọng số bằng NumPy.
+Cách tiếp cận này giúp làm rõ vai trò của từng ma trận trong mô hình, mối quan hệ giữa kích thước dữ liệu và kích thước tham số, cũng như cách gradient được truyền từ tầng đầu ra về tầng ẩn. Qua đó, mô hình không còn được xem như một hộp đen hoàn toàn, mà trở thành một hệ thống tính toán có thể phân tích, kiểm tra và giải thích bằng công thức toán học.
 
 ---
 
 ## 1.2. Mục tiêu và phạm vi đề tài
 
-Phần này xác định rõ những kết quả mà đề tài cần đạt được và các giới hạn được đặt ra để bảo đảm tính khả thi. Mục tiêu cần cụ thể, đo được và bám sát nội dung học phần.
+Đề tài hướng đến việc xây dựng một mô hình ANN Fully Connected có khả năng phân loại ảnh chữ số viết tay trong bộ dữ liệu MNIST. Ngoài mục tiêu đạt được kết quả dự đoán hợp lý, đề tài còn tập trung vào việc trình bày đầy đủ cơ sở lý thuyết, triển khai thuật toán bằng `NumPy`, theo dõi kết quả huấn luyện và phân tích các hạn chế của mô hình.
 
-> 🛑 **[HÀNH ĐỘNG]**: Xác định rõ nhóm sẽ xây dựng mô hình gì, đánh giá ra sao và giới hạn đề tài ở mức nào.
+Phạm vi đề tài được giới hạn để phù hợp với học phần nhập môn. Mô hình sử dụng một tầng ẩn, không sử dụng CNN, RNN, Transformer hoặc framework học sâu bậc cao. Các kết quả thực nghiệm được đánh giá chủ yếu thông qua train loss, dev loss, train accuracy, dev accuracy và các phân tích lỗi khi có dữ liệu minh họa.
 
 ---
 
 ### 1.2.1. Mục tiêu xây dựng mô hình phân loại 10 chữ số
 
-Mục tiêu cốt lõi của đề tài là xây dựng một mô hình có khả năng nhận ảnh chữ số viết tay và dự đoán nhãn tương ứng. Mô hình cần phân biệt được 10 lớp chữ số từ 0 đến 9.
+Mục tiêu cốt lõi của đề tài là huấn luyện mô hình phân loại ảnh chữ số viết tay thành 10 lớp tương ứng với các chữ số từ $0$ đến $9$. Mỗi ảnh đầu vào được biểu diễn thành vector $784$ chiều, sau đó đi qua tầng ẩn gồm $128$ neuron và tầng đầu ra gồm $10$ neuron.
 
-> 🛑 **[HÀNH ĐỘNG]**: Nêu mục tiêu huấn luyện mô hình phân loại ảnh chữ số viết tay thành 10 lớp từ 0 đến 9.
+Kiến trúc mô hình được sử dụng là:
+
+$$
+784 \rightarrow 128 \rightarrow 10
+$$
+
+Mô hình cần tạo ra vector xác suất đầu ra, trong đó lớp có xác suất lớn nhất được chọn làm nhãn dự đoán cuối cùng.
 
 ---
 
 ### 1.2.2. Mục tiêu đánh giá thực nghiệm mô hình
 
-Bên cạnh việc xây dựng mô hình, đề tài cần đánh giá mô hình bằng các chỉ số định lượng và phân tích lỗi cụ thể. Việc đánh giá thực nghiệm giúp xác định mô hình học tốt ở đâu và còn hạn chế ở những trường hợp nào.
+Đề tài không chỉ dừng lại ở việc cài đặt mô hình mà còn cần đánh giá quá trình học của mô hình bằng các chỉ số định lượng. Các chỉ số chính gồm train loss, dev loss, train accuracy và dev accuracy. Việc theo dõi các chỉ số này theo từng mốc iteration giúp xác định mô hình có đang hội tụ ổn định hay không.
 
-> 🛑 **[HÀNH ĐỘNG]**: Nêu mục tiêu đo loss, accuracy, so sánh siêu tham số, phân tích confusion matrix và đánh giá các trường hợp dự đoán sai.
+Bên cạnh đó, đề tài định hướng phân tích confusion matrix và các mẫu dự đoán sai để nhận diện các cặp chữ số dễ nhầm lẫn. Đây là bước cần thiết vì accuracy tổng quát chỉ cho biết tỷ lệ đúng trung bình, trong khi phân tích lỗi giúp hiểu rõ hơn mô hình sai ở đâu và vì sao sai.
 
 ---
 
 ### 1.2.3. Mục tiêu kiểm thử mô hình trên nét vẽ thực tế
 
-Dữ liệu MNIST đã được chuẩn hóa, trong khi nét vẽ thực tế của người dùng có thể khác biệt đáng kể. Do đó, đề tài cần bổ sung bước kiểm thử trên nét vẽ tự do để đánh giá khả năng ứng dụng của mô hình sau tiền xử lý.
+Dữ liệu MNIST đã được chuẩn hóa tốt, trong khi ảnh chữ số do người dùng tự vẽ thường có nhiều khác biệt về vị trí, kích thước, độ dày nét, màu nền và hình dạng. Vì vậy, đề tài đặt mục tiêu kiểm thử mô hình trên nét vẽ thực tế thông qua Web Demo. Mục tiêu của phần này là đánh giá khả năng mô hình hoạt động trên dữ liệu ngoài tập chuẩn sau khi đã qua pipeline tiền xử lý.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày mục tiêu đưa mô hình đã huấn luyện vào dự đoán các chữ số do người dùng tự vẽ để kiểm tra khả năng hoạt động ngoài dữ liệu MNIST.
+Quy trình kiểm thử dự kiến gồm thu nhận ảnh vẽ từ người dùng, chuyển đổi ảnh về định dạng phù hợp, chuẩn hóa kích thước về $28 \times 28$, normalize pixel, flatten thành vector $784$ chiều và đưa vào mô hình đã huấn luyện để dự đoán.
 
 ---
 
 ### 1.2.4. Phạm vi: MNIST, Fully Connected ANN, NumPy, Batch Gradient Descent
 
-Phạm vi của đề tài được giới hạn ở mô hình ANN Fully Connected đơn giản nhằm tập trung vào nền tảng toán học và quy trình huấn luyện. Đề tài không sử dụng các framework học sâu để xây dựng lõi mô hình.
+Phạm vi của đề tài được giới hạn trong bộ dữ liệu MNIST và mô hình ANN Fully Connected. Mạng được xây dựng với kiến trúc $784 \rightarrow 128 \rightarrow 10$, sử dụng ReLU ở tầng ẩn, Softmax ở tầng đầu ra và Cross-Entropy Loss để đo sai số. Quá trình cập nhật tham số được thực hiện bằng Batch Gradient Descent.
 
-> 🛑 **[HÀNH ĐỘNG]**: Khẳng định đề tài chỉ sử dụng ANN Fully Connected kiến trúc $784 \rightarrow 128 \rightarrow 10$, tự cài đặt bằng NumPy và huấn luyện bằng Batch Gradient Descent.
+Toàn bộ phần lõi của mô hình được cài đặt bằng `NumPy`, bao gồm lan truyền tiến, lan truyền ngược, tính loss, tính accuracy và cập nhật trọng số. Đề tài không sử dụng framework học sâu bậc cao cho phần huấn luyện chính nhằm bảo đảm mục tiêu học thuật là hiểu rõ cơ chế hoạt động bên trong của ANN.
 
 ---
 
 ## 1.3. Định hướng giải pháp
 
-Định hướng giải pháp trình bày cách tiếp cận tổng quát để giải quyết bài toán đã nêu. Phần này chỉ mô tả phương pháp ở mức khái quát, chưa đi sâu vào công thức và cài đặt chi tiết.
+Định hướng giải pháp của đề tài gồm năm bước chính: chuẩn bị dữ liệu, xây dựng mô hình, huấn luyện, đánh giá và kiểm thử trực quan. Dữ liệu MNIST được đọc từ file CSV, chia thành tập train và dev, sau đó chuẩn hóa pixel về khoảng $[0,1]$. Mô hình ANN được khởi tạo với một tầng ẩn và được huấn luyện bằng các phép toán ma trận trong `NumPy`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Tóm tắt cách nhóm giải quyết bài toán từ dữ liệu, mô hình, huấn luyện, đánh giá đến dự đoán nét vẽ thực tế.
+Sau khi huấn luyện, mô hình được đánh giá bằng các chỉ số loss và accuracy. Các kết quả này được dùng để nhận xét tốc độ hội tụ và khả năng tổng quát hóa. Ở bước mở rộng, mô hình được đưa vào quy trình Web Demo để nhận diện chữ số do người dùng tự vẽ sau khi ảnh đã được tiền xử lý về định dạng gần với MNIST.
 
 ---
 
 ### 1.3.1. Huấn luyện ANN $784 \rightarrow 128 \rightarrow 10$ trên MNIST
 
-Mô hình được thiết kế với một tầng đầu vào, một tầng ẩn và một tầng đầu ra. Cấu trúc này đủ đơn giản để tự cài đặt nhưng vẫn có khả năng học các quan hệ phi tuyến trong dữ liệu chữ số viết tay.
+Mô hình được thiết kế với tầng đầu vào gồm $784$ đặc trưng, tương ứng với $784$ pixel của ảnh $28 \times 28$. Tầng ẩn gồm $128$ neuron, có nhiệm vụ học các biểu diễn trung gian từ dữ liệu pixel. Tầng đầu ra gồm $10$ neuron, tương ứng với 10 lớp chữ số.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày kiến trúc mạng gồm 784 đầu vào, 128 neuron tầng ẩn và 10 neuron đầu ra.
+Cấu trúc này đủ đơn giản để tự triển khai nhưng vẫn thể hiện đầy đủ các thành phần cơ bản của mạng nơ-ron nhân tạo. Trong quá trình huấn luyện, các tham số $W^{[1]}$, $b^{[1]}$, $W^{[2]}$ và $b^{[2]}$ được cập nhật lặp lại nhằm giảm hàm mất mát và tăng độ chính xác dự đoán.
 
 ---
 
 ### 1.3.2. Theo dõi loss và accuracy trong quá trình học
 
-Quá trình huấn luyện cần được theo dõi bằng các chỉ số định lượng để đánh giá mức độ hội tụ của mô hình. Việc ghi nhận loss và accuracy theo thời gian giúp nhận biết mô hình đang học hiệu quả hay gặp vấn đề về tối ưu.
+Trong quá trình huấn luyện, mô hình cần được theo dõi bằng các chỉ số định lượng. Train loss và train accuracy phản ánh mức độ mô hình học được trên tập huấn luyện, trong khi dev loss và dev accuracy phản ánh khả năng tổng quát hóa trên dữ liệu không trực tiếp dùng để cập nhật tham số.
 
-> 🛑 **[HÀNH ĐỘNG]**: Mô tả việc ghi nhận train/dev loss và train/dev accuracy theo từng mốc iteration để đánh giá quá trình hội tụ.
+Việc ghi nhận các chỉ số theo từng mốc iteration giúp quan sát xu hướng hội tụ. Nếu loss giảm đều và accuracy tăng đều, mô hình đang học theo hướng tích cực. Ngược lại, nếu train accuracy tăng nhưng dev accuracy không cải thiện tương ứng, mô hình có thể có dấu hiệu overfitting.
 
 ---
 
 ### 1.3.3. Phân tích lỗi dự đoán bằng confusion matrix và mẫu sai
 
-Kết quả accuracy tổng quát không đủ để mô tả toàn bộ hành vi của mô hình. Vì vậy, cần sử dụng confusion matrix và các mẫu dự đoán sai để phân tích sâu các trường hợp nhầm lẫn giữa các chữ số.
+Để đánh giá sâu hơn, đề tài định hướng sử dụng confusion matrix nhằm xác định mô hình thường nhầm lẫn giữa những lớp chữ số nào. Với bài toán 10 lớp, confusion matrix giúp quan sát số lượng mẫu thuộc lớp thật $i$ nhưng được dự đoán thành lớp $j$. Các giá trị ngoài đường chéo chính cho biết các trường hợp dự đoán sai.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày định hướng dùng confusion matrix và các ảnh dự đoán sai để tìm ra các cặp chữ số dễ nhầm.
+Ngoài confusion matrix, việc quan sát trực tiếp các ảnh dự đoán sai cũng rất quan trọng. Các mẫu sai có thể cho thấy ảnh hưởng của nét viết mờ, nghiêng, lệch tâm, thiếu nét hoặc có hình dạng gần giống lớp khác. Phân tích này giúp báo cáo không chỉ trình bày kết quả đúng sai, mà còn giải thích nguyên nhân của lỗi dự đoán.
 
 ---
 
 ### 1.3.4. Kiểm thử inference trên nét vẽ người dùng
 
-Sau khi mô hình được huấn luyện, việc kiểm thử trên nét vẽ tự do giúp đánh giá khả năng xử lý dữ liệu ngoài tập chuẩn. Trọng tâm của bước này là chuyển đổi nét vẽ thực tế về định dạng gần giống MNIST trước khi đưa vào mô hình.
+Sau khi mô hình được huấn luyện, đề tài định hướng kiểm thử inference trên nét vẽ người dùng thông qua Web Demo. Ảnh người dùng vẽ cần được xử lý để đưa về dạng tương thích với dữ liệu MNIST. Các bước tiền xử lý có thể gồm chuyển sang ảnh xám, đảo màu nếu cần, xác định vùng chứa chữ số, crop, căn giữa, resize về $28 \times 28$, normalize pixel và flatten thành vector $784$ chiều.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giới thiệu định hướng chuyển nét vẽ tự do thành ảnh $28 \times 28$ chuẩn MNIST rồi đưa vào mô hình để dự đoán.
+Mục tiêu của bước này là kiểm tra khả năng sử dụng mô hình trong tình huống trực quan hơn so với tập dữ liệu chuẩn. Kết quả dự đoán trên nét vẽ thực tế cũng giúp chỉ ra vai trò quan trọng của tiền xử lý ảnh đối với hiệu quả inference.
 
 ---
 
 ## 1.4. Bố cục bài tập lớn
 
-Báo cáo được tổ chức thành các chương theo trình tự từ bối cảnh, cơ sở lý thuyết, thực nghiệm đến kết luận. Cách tổ chức này giúp người đọc theo dõi được toàn bộ quá trình từ xây dựng mô hình đến đánh giá và kiểm thử thực tế.
-
-> 🛑 **[HÀNH ĐỘNG]**: Viết thành đoạn văn liền mạch, giới thiệu nội dung các chương còn lại của báo cáo.
+Báo cáo được tổ chức theo trình tự từ giới thiệu vấn đề, trình bày cơ sở lý thuyết, mô tả thực nghiệm đến kết luận và hướng phát triển. Chương 1 giới thiệu bối cảnh, mục tiêu, phạm vi và định hướng giải pháp của đề tài. Chương 2 trình bày cơ sở lý thuyết và liên hệ trực tiếp với các thành phần trong mã nguồn. Chương 3 tập trung vào thiết kế thực nghiệm, kết quả huấn luyện, phân tích lỗi và kiểm thử mở rộng. Chương 4 tổng kết các kết quả đạt được, nêu hạn chế và đề xuất hướng phát triển tiếp theo.
 
 ---
 
 ### 1.4.1. Nội dung Chương 2
 
-Chương 2 đóng vai trò nền tảng, trình bày các kiến thức cần thiết để hiểu mô hình ANN được sử dụng trong đề tài. Các nội dung lý thuyết cần được chọn lọc, không trình bày lan man ngoài phạm vi mô hình.
-
-> 🛑 **[HÀNH ĐỘNG]**: Giới thiệu Chương 2 trình bày cơ sở lý thuyết về dữ liệu MNIST, ANN, lan truyền tiến, lan truyền ngược và các độ đo đánh giá.
+Chương 2 trình bày cơ sở lý thuyết cần thiết để hiểu mô hình ANN Fully Connected dùng trong đề tài. Nội dung bao gồm biểu diễn dữ liệu MNIST, flatten ảnh $28 \times 28$ thành vector $784$ chiều, chuẩn hóa pixel, one-hot encoding nhãn, kiến trúc mạng $784 \rightarrow 128 \rightarrow 10$, lan truyền tiến, ReLU, Softmax, Cross-Entropy Loss, lan truyền ngược, Batch Gradient Descent và các chỉ số đánh giá như loss và accuracy.
 
 ---
 
 ### 1.4.2. Nội dung Chương 3
 
-Chương 3 là trọng tâm của báo cáo, trình bày quy trình thực nghiệm và các kết quả đạt được. Chương này cần có bảng, biểu đồ, confusion matrix và phân tích lỗi cụ thể.
-
-> 🛑 **[HÀNH ĐỘNG]**: Giới thiệu Chương 3 trình bày thiết kế thực nghiệm, kết quả huấn luyện, so sánh siêu tham số, phân tích lỗi và dự đoán nét vẽ thực tế.
+Chương 3 trình bày phần thực nghiệm và đánh giá kết quả. Nội dung chương bao gồm môi trường chạy, cách chia train/dev/test demo, cấu hình mô hình cơ sở, kết quả huấn luyện theo iteration, nhận xét tốc độ hội tụ, so sánh siêu tham số, phân tích confusion matrix, phân tích mẫu sai, trực quan hóa mô hình và định hướng kiểm thử trên nét vẽ thực tế thông qua Web Demo.
 
 ---
 
 ### 1.4.3. Nội dung Chương 4
 
-Chương 4 tổng hợp những kết quả quan trọng nhất của đề tài và chỉ ra các giới hạn còn tồn tại. Phần hướng phát triển cần bám sát các hạn chế đã được phân tích trong Chương 3.
-
-> 🛑 **[HÀNH ĐỘNG]**: Giới thiệu Chương 4 tổng kết kết quả đạt được, chỉ ra hạn chế và đề xuất hướng phát triển.
+Chương 4 tổng kết những kết quả đã đạt được của đề tài, bao gồm việc tự xây dựng mô hình ANN bằng `NumPy`, huấn luyện và đánh giá mô hình trên dữ liệu MNIST, cũng như định hướng kiểm thử trên dữ liệu vẽ tay thực tế. Chương này đồng thời chỉ ra các hạn chế của mô hình Fully Connected, hạn chế của Batch Gradient Descent và các rủi ro trong tiền xử lý ảnh vẽ tay. Từ đó, báo cáo đề xuất các hướng phát triển phù hợp như cải thiện pipeline tiền xử lý, bổ sung dữ liệu kiểm thử thực tế và nâng cao khả năng trực quan hóa kết quả.
 
 ---
-
 # Chương 2. Cơ sở lý thuyết
 
 Chương này trình bày các khái niệm và công thức nền tảng liên quan đến bài toán nhận diện chữ số viết tay bằng ANN. Nội dung được liên hệ trực tiếp với mã nguồn `ann.py`, trong đó mô hình được cài đặt thủ công bằng `NumPy`, dữ liệu được đọc bằng `Pandas`, và ảnh demo được hiển thị bằng `Matplotlib`. Các thành phần chính gồm tiền xử lý dữ liệu, kiến trúc mạng Fully Connected, lan truyền tiến, hàm mất mát, lan truyền ngược và cập nhật tham số.
