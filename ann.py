@@ -194,7 +194,7 @@ def generate_confusion_matrix_and_errors(W1, b1, W2, b2):
 # --- THỰC THI CHÍNH ---
 if not os.path.exists("model_weights.npz"):
     print("Training model...")
-    W1, b1, W2, b2, history = gradient_descent(X_train, Y_train, 0.1, 500)
+    W1, b1, W2, b2, history = gradient_descent(X_train, Y_train, 0.5, 500)
     save_model(W1, b1, W2, b2)
     # Gen ảnh biểu đồ
     plot_and_save_metrics(history)
