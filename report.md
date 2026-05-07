@@ -745,14 +745,14 @@ $$
 Toàn bộ quá trình lan truyền ngược được tóm tắt bằng hệ phương trình sau:
 
 $$
-\begin{cases}
-dZ^{[2]} = A^{[2]} - Y \\[4pt]
-dW^{[2]} = \frac{1}{m} dZ^{[2]} (A^{[1]})^T \\[4pt]
-db^{[2]} = \frac{1}{m} \sum_{i=1}^{m} dZ^{[2](i)} \\[4pt]
-dZ^{[1]} = (W^{[2]})^T dZ^{[2]} \odot ReLU'(Z^{[1]}) \\[4pt]
-dW^{[1]} = \frac{1}{m} dZ^{[1]} X^T \\[4pt]
-db^{[1]} = \frac{1}{m} \sum_{i=1}^{m} dZ^{[1](i)}
-\end{cases}
+\begin{aligned}
+dZ^{[2]} &= A^{[2]} - Y \\[4pt]
+dW^{[2]} &= \frac{1}{m} dZ^{[2]} (A^{[1]})^T \\[4pt]
+db^{[2]} &= \frac{1}{m} \sum_{i=1}^{m} dZ^{[2](i)} \\[4pt]
+dZ^{[1]} &= (W^{[2]})^T dZ^{[2]} \odot ReLU'(Z^{[1]}) \\[4pt]
+dW^{[1]} &= \frac{1}{m} dZ^{[1]} X^T \\[4pt]
+db^{[1]} &= \frac{1}{m} \sum_{i=1}^{m} dZ^{[1](i)}
+\end{aligned}
 $$
 
 Hệ công thức này tương ứng trực tiếp với hàm `backward_prop()` trong code NumPy.
