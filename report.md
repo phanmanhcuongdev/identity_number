@@ -224,412 +224,789 @@ Chương 4 tổng hợp những kết quả quan trọng nhất của đề tài
 
 # Chương 2. Cơ sở lý thuyết
 
-Chương này trình bày các khái niệm và công thức nền tảng liên quan đến bài toán nhận diện chữ số viết tay bằng ANN. Nội dung cần bảo đảm mối liên hệ rõ ràng giữa lý thuyết toán học, thuật toán và mã nguồn triển khai bằng NumPy.
-
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày nền tảng toán học và thuật toán cần thiết để hiểu mô hình ANN Fully Connected dùng cho nhận diện chữ số viết tay.
+Chương này trình bày các khái niệm và công thức nền tảng liên quan đến bài toán nhận diện chữ số viết tay bằng ANN. Nội dung được liên hệ trực tiếp với mã nguồn `ann.py`, trong đó mô hình được cài đặt thủ công bằng `NumPy`, dữ liệu được đọc bằng `Pandas`, và ảnh demo được hiển thị bằng `Matplotlib`. Các thành phần chính gồm tiền xử lý dữ liệu, kiến trúc mạng Fully Connected, lan truyền tiến, hàm mất mát, lan truyền ngược và cập nhật tham số.
 
 ---
 
 ## 2.1. Bài toán phân loại ảnh chữ số viết tay
 
-Bài toán nhận diện chữ số viết tay có thể được mô hình hóa như một bài toán phân loại ảnh đa lớp. Mỗi ảnh đầu vào cần được ánh xạ đến một nhãn chữ số duy nhất trong tập các lớp cho trước.
+Bài toán nhận diện chữ số viết tay trong đề tài được mô hình hóa là bài toán phân loại đa lớp. Mỗi mẫu đầu vào là một ảnh chữ số viết tay và đầu ra là một nhãn thuộc một trong 10 lớp chữ số từ $0$ đến $9$. Trong mã nguồn, nhãn thật được lấy từ cột đầu tiên của `train.csv`, còn các cột còn lại là đặc trưng pixel của ảnh.
 
-> 🛑 **[HÀNH ĐỘNG]**: Định nghĩa bài toán đầu vào là ảnh chữ số và đầu ra là một trong 10 lớp dự đoán.
+Về mặt toán học, mô hình cần học một hàm ánh xạ:
+
+$$
+f_{\theta}: \mathbb{R}^{784} \rightarrow \{0,1,2,3,4,5,6,7,8,9\}
+$$
+
+Trong đó $\theta$ là tập tham số của mạng, gồm $W^{[1]}$, $b^{[1]}$, $W^{[2]}$ và $b^{[2]}$.
 
 ---
 
 ### 2.1.1. Đầu vào của bài toán
 
-Đầu vào của mô hình là ảnh chữ số viết tay đã được chuẩn hóa về kích thước cố định. Trong đề tài này, mỗi ảnh được biểu diễn dưới dạng một ma trận pixel có kích thước $28 \times 28$.
+Đầu vào của mô hình là ảnh chữ số viết tay mức xám kích thước $28 \times 28$. Trong `ann.py`, ảnh được đưa vào mạng dưới dạng vector có $784$ phần tử, phù hợp với ma trận trọng số đầu tiên `W1` có shape `(128, 784)`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày ảnh đầu vào là ảnh xám kích thước $28 \times 28$, sau đó được biểu diễn thành vector 784 chiều.
+Công thức chuyển đổi kích thước ảnh là:
+
+$$
+28 \times 28 = 784
+$$
+
+Do đó, mỗi ảnh được biểu diễn dưới dạng:
+
+$$
+x^{(i)} \in \mathbb{R}^{784}
+$$
+
+Trong code, dữ liệu đặc trưng được lấy bằng `X_dev = data_dev[1:n]`, `X_train = data_train[1:n]` và `X_test = test_data / 255.`. Việc bỏ dòng đầu tiên trong `data_dev` và `data_train` phản ánh rằng dòng đầu tiên sau khi chuyển vị là nhãn, còn các dòng còn lại là pixel.
 
 ---
 
 ### 2.1.2. Đầu ra của bài toán
 
-Đầu ra của mô hình là xác suất tương ứng với từng lớp chữ số. Lớp có xác suất lớn nhất được chọn làm kết quả dự đoán cuối cùng.
+Đầu ra của mô hình là vector xác suất trên 10 lớp chữ số. Trong `ann.py`, tầng cuối có ma trận `W2` shape `(10, 128)` và bias `b2` shape `(10, 1)`, vì vậy logits tầng đầu ra có 10 hàng, tương ứng với 10 chữ số.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích đầu ra là phân phối xác suất trên 10 lớp chữ số từ 0 đến 9.
+Với một mẫu $i$, đầu ra xác suất có dạng:
+
+$$
+A^{[2],(i)} \in \mathbb{R}^{10}
+$$
+
+Nhãn dự đoán được lấy bằng hàm `get_predictions(A2)`, trong đó code sử dụng:
+
+```python
+np.argmax(A2, 0)
+```
+
+Điều này có nghĩa là mô hình chọn chỉ số lớp có xác suất lớn nhất theo từng cột mẫu.
 
 ---
 
 ### 2.1.3. Đặc điểm của phân loại đa lớp
 
-Bài toán phân loại chữ số viết tay thuộc nhóm phân loại đa lớp, trong đó mỗi mẫu chỉ có một nhãn đúng. Điều này yêu cầu mô hình tạo ra một phân phối xác suất hợp lệ trên toàn bộ các lớp.
+Bài toán này là bài toán phân loại đa lớp, trong đó mỗi ảnh chỉ thuộc đúng một lớp trong 10 lớp chữ số. Vì mỗi mẫu chỉ có một nhãn đúng, nhãn số nguyên cần được chuyển thành vector one-hot khi tính Cross-Entropy Loss.
 
-> 🛑 **[HÀNH ĐỘNG]**: Phân tích đây là bài toán multi-class classification, mỗi mẫu chỉ thuộc một nhãn đúng duy nhất.
+Trong `ann.py`, hàm `one_hot(Y)` tạo ma trận nhãn bằng các bước:
+
+```python
+one_hot_Y = np.zeros((Y.size, Y.max() + 1))
+one_hot_Y[np.arange(Y.size), Y] = 1
+one_hot_Y = one_hot_Y.T
+```
+
+Sau khi chuyển vị, ma trận one-hot có dạng:
+
+$$
+Y \in \mathbb{R}^{10 \times m}
+$$
+
+Trong đó $m$ là số mẫu trong batch hoặc tập dữ liệu đang xét.
 
 ---
 
 ## 2.2. Dữ liệu MNIST và tiền xử lý
 
-MNIST là bộ dữ liệu phổ biến trong các bài toán nhập môn về nhận diện chữ số viết tay. Để phù hợp với mô hình ANN Fully Connected, dữ liệu cần được chuẩn hóa và biến đổi trước khi đưa vào huấn luyện.
+Dữ liệu được đọc từ hai file `train.csv` và `test.csv`. Trong `ann.py`, file `train.csv` được đọc bằng `pd.read_csv('train.csv')`, sau đó chuyển sang mảng `NumPy` bằng `np.array(data)`. Dữ liệu có nhãn được xáo trộn bằng `np.random.shuffle(data)` trước khi chia thành tập dev và tập train.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày đặc điểm dữ liệu MNIST và các bước tiền xử lý cần thiết trước khi huấn luyện ANN.
+Code chia dữ liệu như sau:
+
+```python
+data_dev = data[0:4000].T
+data_train = data[4000:m].T
+```
+
+Vì vậy, tập dev gồm 4000 mẫu đầu tiên sau khi shuffle, còn tập train gồm các mẫu còn lại từ vị trí 4000 đến hết dữ liệu. File `test.csv` được đọc riêng, shuffle, lấy 10000 mẫu đầu và chỉ dùng để demo dự đoán trực quan vì trong code không có nhãn test.
 
 ---
 
 ### 2.2.1. Cấu trúc ảnh $28 \times 28$
 
-Mỗi ảnh MNIST là ảnh xám có kích thước cố định, trong đó mỗi pixel biểu diễn mức cường độ sáng. Cấu trúc này giúp việc chuyển đổi dữ liệu sang vector đầu vào của ANN trở nên trực tiếp.
+Mỗi ảnh chữ số viết tay có kích thước $28 \times 28$, tương ứng với $784$ giá trị pixel. Trong code, cấu trúc này được xác nhận trực tiếp ở hàm `test_prediction`, nơi một ảnh test được reshape để hiển thị:
 
-> 🛑 **[HÀNH ĐỘNG]**: Mô tả mỗi ảnh có 784 pixel, mỗi pixel biểu diễn cường độ sáng trong ảnh chữ số viết tay.
+```python
+current_image = current_image.reshape((28, 28)) * 255
+```
+
+Điều này cho thấy dữ liệu đầu vào ban đầu là vector $784$ chiều, nhưng có thể khôi phục về ảnh $28 \times 28$ để trực quan hóa.
 
 ---
 
 ### 2.2.2. Flatten ảnh thành vector 784 chiều
 
-Mạng Fully Connected nhận đầu vào dưới dạng vector thay vì ma trận hai chiều. Vì vậy, ảnh $28 \times 28$ cần được trải phẳng thành vector có 784 phần tử.
+Mạng Fully Connected không xử lý trực tiếp ma trận ảnh hai chiều mà nhận vector đặc trưng. Vì vậy, ảnh $28 \times 28$ được biểu diễn thành vector $784$ chiều trước khi đi vào tầng đầu vào.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích cách trải phẳng ma trận ảnh $28 \times 28$ thành vector một chiều để phù hợp với mạng Fully Connected.
+Biểu diễn toán học:
+
+$$
+x^{(i)} \in \mathbb{R}^{28 \times 28}
+\rightarrow
+x^{(i)} \in \mathbb{R}^{784}
+$$
+
+Trong code, việc dữ liệu đã ở dạng các cột pixel trong CSV cho phép lấy trực tiếp các đặc trưng bằng `data_train[1:n]` và `data_dev[1:n]` sau khi chuyển vị.
 
 ---
 
 ### 2.2.3. Normalize pixel
 
-Chuẩn hóa pixel giúp đưa các giá trị đầu vào về cùng một thang đo, từ đó hỗ trợ quá trình tối ưu ổn định hơn. Đây là bước tiền xử lý quan trọng trước khi huấn luyện mô hình.
+Trong `ann.py`, các giá trị pixel được chuẩn hóa bằng cách chia cho $255$:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày việc chia giá trị pixel cho 255 để đưa dữ liệu về khoảng $[0, 1]$, giúp mô hình học ổn định hơn.
+```python
+X_dev = X_dev / 255.
+X_train = X_train / 255.
+X_test = test_data / 255.
+```
+
+Do giá trị pixel ảnh xám thường nằm trong khoảng từ $0$ đến $255$, phép chia này đưa dữ liệu về khoảng $[0,1]$:
+
+$$
+0 \leq x_{\text{norm}} \leq 1
+$$
+
+Việc chuẩn hóa giúp các giá trị đầu vào có cùng thang đo, làm cho quá trình tính toán ma trận và cập nhật gradient ổn định hơn.
 
 ---
 
 ### 2.2.4. One-hot encoding nhãn
 
-Nhãn chữ số ban đầu thường ở dạng số nguyên từ 0 đến 9. Khi tính hàm mất mát Cross-Entropy, các nhãn này cần được chuyển thành vector one-hot tương ứng.
+Nhãn ban đầu trong `train.csv` là số nguyên từ $0$ đến $9$. Để tính Cross-Entropy Loss, code chuyển nhãn thành ma trận one-hot bằng hàm `one_hot(Y)`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích cách chuyển nhãn số nguyên thành vector 10 chiều để tính Cross-Entropy Loss.
+Nếu có $m$ mẫu, sau khi chuyển đổi, ma trận nhãn có dạng:
+
+$$
+Y \in \mathbb{R}^{10 \times m}
+$$
+
+Trong đó mỗi cột là vector one-hot của một mẫu. Cách triển khai trong code dùng `np.zeros`, `np.arange` và phép gán chỉ số để đặt giá trị $1$ tại vị trí lớp đúng.
 
 ---
 
 ## 2.3. Mô hình ANN Fully Connected
 
-Mô hình ANN Fully Connected là kiến trúc mạng nơ-ron trong đó các neuron giữa hai tầng liên tiếp được kết nối đầy đủ. Kiến trúc này phù hợp để minh họa các khái niệm nền tảng như trọng số, bias, lan truyền tiến và lan truyền ngược.
+Mô hình trong `ann.py` là mạng nơ-ron Fully Connected gồm một tầng ẩn. Các phép tính được cài đặt thủ công bằng `NumPy`, không sử dụng framework học sâu như TensorFlow, Keras hoặc PyTorch.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cấu trúc mạng nơ-ron nhiều lớp dùng trong đề tài.
+Mạng gồm các thành phần chính:
+- Tầng đầu vào có $784$ đặc trưng.
+- Tầng ẩn có $128$ neuron.
+- Tầng đầu ra có $10$ neuron.
+- Hàm kích hoạt tầng ẩn là `ReLU`.
+- Hàm đầu ra là `softmax`.
 
 ---
 
 ### 2.3.1. Kiến trúc $784 \rightarrow 128 \rightarrow 10$
 
-Kiến trúc của mô hình gồm tầng đầu vào 784 chiều, một tầng ẩn 128 neuron và tầng đầu ra 10 neuron. Tầng đầu ra tương ứng với 10 lớp chữ số cần phân loại.
+Kiến trúc mô hình được xác định trực tiếp từ hàm `init_params()`:
 
-> 🛑 **[HÀNH ĐỘNG]**: Chèn sơ đồ kiến trúc gồm input layer 784 neuron, hidden layer 128 neuron và output layer 10 neuron.
+```python
+W1 = np.random.rand(128, 784) - 0.5
+b1 = np.random.rand(128, 1) - 0.5
+W2 = np.random.rand(10, 128) - 0.5
+b2 = np.random.rand(10, 1) - 0.5
+```
+
+Vì vậy, kiến trúc mạng là:
+
+$$
+784 \rightarrow 128 \rightarrow 10
+$$
+
+Tầng đầu vào nhận vector ảnh $784$ chiều. Tầng ẩn gồm $128$ neuron. Tầng đầu ra gồm $10$ neuron, tương ứng với 10 lớp chữ số.
+
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 2.3.2. Vai trò của trọng số và bias
 
-Trọng số và bias là các tham số học được trong quá trình huấn luyện. Chúng quyết định cách mô hình biến đổi dữ liệu đầu vào qua từng tầng để tạo ra dự đoán.
+Trong mô hình, trọng số và bias là các tham số được học trong quá trình huấn luyện. Ma trận `W1` biến đổi đầu vào $X$ sang tầng ẩn, còn `b1` dịch chuyển giá trị tuyến tính tại tầng ẩn. Tương tự, `W2` và `b2` biến đổi kích hoạt tầng ẩn thành logits đầu ra.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích trọng số học mức ảnh hưởng của đặc trưng đầu vào, còn bias điều chỉnh ngưỡng kích hoạt của neuron.
+Các tham số của mô hình là:
+
+$$
+\theta = \{W^{[1]}, b^{[1]}, W^{[2]}, b^{[2]}\}
+$$
+
+Trong code, các tham số tương ứng là `W1`, `b1`, `W2`, `b2`. Chúng được cập nhật trong hàm `update_params`.
 
 ---
 
 ### 2.3.3. Bảng kích thước các ma trận trong mô hình
 
-Việc xác định đúng kích thước các ma trận giúp bảo đảm tính nhất quán giữa công thức toán học và mã nguồn NumPy. Bảng kích thước cũng giúp người đọc kiểm tra được từng bước tính toán trong mô hình.
+Các kích thước dưới đây được suy ra trực tiếp từ `init_params()`, `forward_prop()` và cách dữ liệu được tổ chức theo cột mẫu trong `ann.py`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Chèn bảng kích thước `X`, `Y`, `W1`, `b1`, `Z1`, `A1`, `W2`, `b2`, `Z2`, `A2` để liên hệ công thức với code.
+| Ký hiệu toán học | Biến trong code | Kích thước | Ý nghĩa |
+|---|---|---:|---|
+| $X$ | `X` | $784 \times m$ | Ma trận dữ liệu đầu vào |
+| $Y$ | `one_hot_Y` | $10 \times m$ | Ma trận nhãn one-hot |
+| $W^{[1]}$ | `W1` | $128 \times 784$ | Trọng số từ input sang hidden |
+| $b^{[1]}$ | `b1` | $128 \times 1$ | Bias tầng ẩn |
+| $Z^{[1]}$ | `Z1` | $128 \times m$ | Giá trị tuyến tính tầng ẩn |
+| $A^{[1]}$ | `A1` | $128 \times m$ | Kích hoạt tầng ẩn sau ReLU |
+| $W^{[2]}$ | `W2` | $10 \times 128$ | Trọng số từ hidden sang output |
+| $b^{[2]}$ | `b2` | $10 \times 1$ | Bias tầng đầu ra |
+| $Z^{[2]}$ | `Z2` | $10 \times m$ | Logits đầu ra |
+| $A^{[2]}$ | `A2` | $10 \times m$ | Xác suất dự đoán |
 
 ---
 
 ## 2.4. Lan truyền tiến
 
-Lan truyền tiến là quá trình đưa dữ liệu đầu vào đi qua các tầng của mạng để tạo ra xác suất dự đoán. Đây là bước mô hình thực hiện suy luận trước khi tính sai số.
+Lan truyền tiến được cài đặt trong hàm `forward_prop(W1, b1, W2, b2, X)`. Hàm này nhận tham số hiện tại và dữ liệu đầu vào, sau đó trả về `Z1`, `A1`, `Z2`, `A2`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày quá trình mô hình biến đổi dữ liệu đầu vào thành xác suất dự đoán.
+Code thực hiện:
+
+```python
+Z1 = W1.dot(X) + b1
+A1 = ReLU(Z1)
+Z2 = W2.dot(A1) + b2
+A2 = softmax(Z2)
+```
 
 ---
 
 ### 2.4.1. Tính toán tầng ẩn
 
-Ở tầng ẩn, dữ liệu đầu vào được nhân với ma trận trọng số và cộng với bias. Kết quả tuyến tính này sau đó được đưa qua hàm kích hoạt để tạo biểu diễn phi tuyến.
+Tại tầng ẩn, code tính:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày công thức `Z1 = W1X + b1` và giải thích ý nghĩa của phép biến đổi tuyến tính đầu tiên.
+```python
+Z1 = W1.dot(X) + b1
+```
+
+Công thức toán học tương ứng:
+
+$$
+Z^{[1]} = W^{[1]}X + b^{[1]}
+$$
+
+Với $W^{[1]} \in \mathbb{R}^{128 \times 784}$ và $X \in \mathbb{R}^{784 \times m}$, kết quả $W^{[1]}X$ có kích thước $128 \times m$. Bias $b^{[1]}$ có kích thước $128 \times 1$ và được NumPy broadcast theo từng cột mẫu khi cộng vào $Z^{[1]}$.
 
 ---
 
 ### 2.4.2. Hàm kích hoạt ReLU
 
-ReLU là hàm kích hoạt đơn giản nhưng hiệu quả, giúp mô hình học được các quan hệ phi tuyến. Hàm này giữ nguyên các giá trị dương và đưa các giá trị âm về 0.
+Hàm ReLU được cài đặt trong `ann.py` như sau:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày công thức $ReLU(z) = max(0, z)$ và vai trò đưa tính phi tuyến vào mô hình.
+```python
+def ReLU(Z):
+    return np.maximum(Z, 0)
+```
+
+Công thức toán học:
+
+$$
+ReLU(z) = \max(0,z)
+$$
+
+ReLU giữ nguyên các giá trị dương và đưa các giá trị âm về $0$. Nhờ đó, mô hình có khả năng biểu diễn quan hệ phi tuyến thay vì chỉ là tổ hợp tuyến tính của đầu vào.
 
 ---
 
 ### 2.4.3. Tính toán tầng đầu ra
 
-Tầng đầu ra biến đổi biểu diễn của tầng ẩn thành các giá trị logits cho từng lớp chữ số. Các logits này chưa phải xác suất và cần được đưa qua Softmax.
+Sau khi có kích hoạt tầng ẩn $A^{[1]}$, code tính logits tầng đầu ra:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày công thức `Z2 = W2A1 + b2` để tạo logits cho 10 lớp chữ số.
+```python
+Z2 = W2.dot(A1) + b2
+```
+
+Công thức toán học:
+
+$$
+Z^{[2]} = W^{[2]}A^{[1]} + b^{[2]}
+$$
+
+Với $W^{[2]} \in \mathbb{R}^{10 \times 128}$ và $A^{[1]} \in \mathbb{R}^{128 \times m}$, logits $Z^{[2]}$ có kích thước $10 \times m$.
 
 ---
 
 ### 2.4.4. Softmax và xác suất dự đoán
 
-Softmax chuyển đổi logits thành phân phối xác suất trên các lớp đầu ra. Nhãn dự đoán được xác định bằng lớp có xác suất lớn nhất.
+Hàm `softmax(Z)` trong `ann.py` được viết như sau:
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích Softmax biến logits thành xác suất và nhãn dự đoán được lấy bằng `argmax`.
+```python
+def softmax(Z):
+    A = np.exp(Z) / sum(np.exp(Z))
+    return A
+```
+
+Công thức tương ứng:
+
+$$
+A^{[2]} = Softmax(Z^{[2]})
+$$
+
+Với mỗi cột mẫu, Softmax chuyển logits thành xác suất dự đoán trên 10 lớp chữ số. Nhãn dự đoán được lấy bằng `np.argmax(A2, 0)` trong hàm `get_predictions(A2)`.
+
+Lưu ý: mã nguồn hiện tại dùng công thức Softmax trực tiếp bằng `np.exp(Z)` và không trừ `np.max(Z, axis=0, keepdims=True)` trước khi lấy hàm mũ.
 
 ---
 
 ## 2.5. Hàm mất mát và lan truyền ngược
 
-Sau khi mô hình tạo ra dự đoán, cần đo sai số giữa kết quả dự đoán và nhãn thật. Lan truyền ngược sử dụng sai số này để tính gradient và cập nhật các tham số của mô hình.
-
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cách mô hình đo sai số và tính gradient để cập nhật trọng số.
+Sau khi lan truyền tiến tạo ra $A^{[2]}$, mô hình tính sai số bằng Cross-Entropy Loss và dùng lan truyền ngược để tính gradient cho từng tham số. Các hàm liên quan trong `ann.py` gồm `compute_loss`, `backward_prop` và `update_params`.
 
 ---
 
 ### 2.5.1. Cross-Entropy Loss
 
-Cross-Entropy Loss là hàm mất mát thường dùng cho bài toán phân loại đa lớp. Hàm này phạt mạnh các dự đoán có xác suất thấp đối với nhãn đúng.
+Hàm mất mát được cài đặt trong `compute_loss(A2, Y)`. Code chuyển nhãn sang one-hot, thêm hằng số `epsilon = 1e-8` để tránh `log(0)`, rồi tính trung bình loss trên $m$ mẫu.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày công thức loss cho phân loại đa lớp và giải thích loss càng nhỏ thì dự đoán càng gần nhãn thật.
+Code:
+
+```python
+epsilon = 1e-8
+loss = -np.sum(one_hot_Y * np.log(A2 + epsilon)) / m
+```
+
+Công thức toán học:
+
+$$
+J(\theta) =
+-\frac{1}{m}
+\sum_{i=1}^{m}
+\sum_{k=1}^{10}
+Y_k^{(i)} \log\left(A_k^{[2],(i)} + \epsilon\right)
+$$
+
+Loss càng nhỏ thì phân phối xác suất dự đoán càng gần với nhãn thật dạng one-hot.
 
 ---
 
 ### 2.5.2. Gradient tại tầng đầu ra
 
-Gradient tại tầng đầu ra thể hiện sai lệch giữa phân phối xác suất dự đoán và nhãn thật dạng one-hot. Với kết hợp Softmax và Cross-Entropy, công thức gradient được rút gọn thuận tiện cho cài đặt.
+Trong `backward_prop`, gradient tại tầng đầu ra được tính bằng:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày công thức `dZ2 = A2 - Y` và ý nghĩa đây là sai lệch giữa xác suất dự đoán và nhãn one-hot.
+```python
+dZ2 = A2 - one_hot_Y
+```
+
+Công thức:
+
+$$
+dZ^{[2]} = A^{[2]} - Y
+$$
+
+Đây là sai lệch giữa xác suất dự đoán và nhãn thật dạng one-hot. Công thức này là dạng rút gọn thường dùng khi kết hợp Softmax với Cross-Entropy.
 
 ---
 
 ### 2.5.3. Gradient tại tầng ẩn
 
-Sai số từ tầng đầu ra được truyền ngược về tầng ẩn thông qua ma trận trọng số. Đạo hàm ReLU được sử dụng để xác định những neuron nào có đóng góp vào gradient.
+Lan truyền lỗi về tầng ẩn được cài đặt bằng:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cách sai số được lan truyền ngược qua `W2` và nhân với đạo hàm ReLU để tính gradient tầng ẩn.
+```python
+dZ1 = W2.T.dot(dZ2) * ReLU_deriv(Z1)
+```
+
+Trong đó `ReLU_deriv(Z)` được định nghĩa:
+
+```python
+def ReLU_deriv(Z):
+    return Z > 0
+```
+
+Công thức toán học:
+
+$$
+dZ^{[1]} = (W^{[2]})^T dZ^{[2]} \odot ReLU'(Z^{[1]})
+$$
+
+Toán tử $\odot$ biểu diễn phép nhân từng phần tử. Đạo hàm ReLU xác định neuron nào có giá trị tuyến tính dương và được phép truyền gradient.
 
 ---
 
 ### 2.5.4. Cập nhật tham số bằng Batch Gradient Descent
 
-Batch Gradient Descent cập nhật tham số dựa trên gradient tính từ toàn bộ tập huấn luyện. Cách tiếp cận này đơn giản, dễ hiểu và phù hợp với mục tiêu tự cài đặt mô hình từ đầu.
+Trong code, gradient được tính trên toàn bộ ma trận $X$ được truyền vào `gradient_descent`, do đó cách cập nhật tương ứng với Batch Gradient Descent trên tập dữ liệu đầu vào của hàm.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày công thức cập nhật `W := W - αdW`, `b := b - αdb` trên toàn bộ tập huấn luyện.
+Các gradient được tính:
+
+```python
+dW2 = 1 / m * dZ2.dot(A1.T)
+db2 = 1 / m * np.sum(dZ2, axis=1, keepdims=True)
+dW1 = 1 / m * dZ1.dot(X.T)
+db1 = 1 / m * np.sum(dZ1, axis=1, keepdims=True)
+```
+
+Cập nhật tham số được thực hiện trong `update_params`:
+
+```python
+W1 = W1 - alpha * dW1
+b1 = b1 - alpha * db1
+W2 = W2 - alpha * dW2
+b2 = b2 - alpha * db2
+```
+
+Công thức tổng quát:
+
+$$
+W^{[l]} := W^{[l]} - \alpha dW^{[l]}
+$$
+
+$$
+b^{[l]} := b^{[l]} - \alpha db^{[l]}
+$$
+
+Trong đó $\alpha$ là learning rate.
 
 ---
 
 ## 2.6. Phương pháp đánh giá
 
-Đánh giá mô hình cần kết hợp giữa chỉ số tổng quát và phân tích chi tiết theo từng lớp. Các phương pháp đánh giá trong phần này giúp xác định không chỉ mô hình đúng bao nhiêu, mà còn sai ở đâu và vì sao.
+Trong `ann.py`, mô hình được đánh giá bằng loss và accuracy trên tập train và tập dev trong quá trình huấn luyện. Các giá trị này được in ra sau mỗi 10 iteration.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày các chỉ số và công cụ dùng để đánh giá mô hình trong thực nghiệm.
+Code kiểm tra theo chu kỳ:
+
+```python
+if i % 10 == 0:
+```
+
+Các hàm đánh giá chính là `compute_loss`, `get_predictions` và `get_accuracy`.
 
 ---
 
 ### 2.6.1. Train accuracy và dev accuracy
 
-Train accuracy phản ánh mức độ mô hình học được từ tập huấn luyện, trong khi dev accuracy phản ánh khả năng tổng quát hóa. So sánh hai chỉ số này giúp nhận diện hiện tượng học chưa đủ hoặc quá khớp.
+Accuracy được tính trong hàm `get_accuracy(predictions, Y)`:
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích train accuracy đo khả năng học trên tập huấn luyện, còn dev accuracy đo khả năng tổng quát hóa.
+```python
+return np.sum(predictions == Y) / Y.size
+```
+
+Train accuracy dùng dự đoán từ $A^{[2]}$ trên tập train. Dev accuracy được tính bằng cách forward lại trên `X_dev`:
+
+```python
+_, _, _, A2_dev = forward_prop(W1, b1, W2, b2, X_dev)
+dev_pred = get_predictions(A2_dev)
+dev_acc = get_accuracy(dev_pred, Y_dev)
+```
+
+Train accuracy phản ánh khả năng học trên tập huấn luyện, còn dev accuracy phản ánh khả năng tổng quát hóa trên dữ liệu không dùng trực tiếp để cập nhật trọng số.
 
 ---
 
 ### 2.6.2. Train loss và dev loss
 
-Loss cho biết mức độ sai lệch của phân phối dự đoán so với nhãn thật. Việc theo dõi train loss và dev loss theo thời gian giúp đánh giá quá trình hội tụ của mô hình.
+Train loss được tính bằng:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày ý nghĩa của loss trên train/dev trong việc quan sát quá trình hội tụ và dấu hiệu overfitting.
+```python
+train_loss = compute_loss(A2, Y)
+```
+
+Dev loss được tính bằng:
+
+```python
+dev_loss = compute_loss(A2_dev, Y_dev)
+```
+
+Việc theo dõi train loss và dev loss giúp đánh giá quá trình hội tụ. Nếu train loss giảm nhưng dev loss không giảm tương ứng, mô hình có thể có dấu hiệu overfitting.
 
 ---
 
 ### 2.6.3. Confusion matrix
 
-Confusion matrix là công cụ trực quan để quan sát mô hình nhầm lẫn giữa các lớp như thế nào. Ma trận này đặc biệt hữu ích trong bài toán chữ số viết tay vì một số cặp chữ số có hình dạng gần nhau.
+Trong `ann.py` hiện tại không có hàm xây dựng confusion matrix. Vì vậy, nội dung confusion matrix và hình minh họa cần được bổ sung từ kết quả chạy terminal hoặc script đánh giá riêng.
 
-> 🛑 **[HÀNH ĐỘNG]**: Giải thích confusion matrix cho biết mô hình dự đoán đúng/sai từng lớp và giúp phát hiện các cặp chữ số dễ nhầm.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 2.6.4. Phân tích mẫu dự đoán sai
 
-Phân tích mẫu dự đoán sai giúp bổ sung góc nhìn định tính cho các chỉ số định lượng. Những mẫu sai tiêu biểu có thể chỉ ra hạn chế của dữ liệu, mô hình hoặc bước tiền xử lý.
+Trong `ann.py` hiện tại có hàm `test_prediction(index, W1, b1, W2, b2)` để hiển thị ảnh test và dự đoán nhãn. Tuy nhiên, tập `test.csv` trong code không có nhãn thật đi kèm, nên không thể xác định mẫu dự đoán sai trên test bằng code hiện tại. Việc phân tích mẫu sai cần thực hiện trên tập dev có nhãn sau khi lấy dự đoán và so sánh với `Y_dev`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cách chọn một số ảnh sai tiêu biểu, so sánh nhãn thật, nhãn dự đoán và đặc điểm nét viết gây nhầm lẫn.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 # Chương 3. Thực nghiệm và đánh giá kết quả
 
-Chương này là phần trọng tâm của báo cáo, trình bày quá trình triển khai, huấn luyện, đánh giá và phân tích mô hình. Nội dung cần có số liệu thực nghiệm, biểu đồ, bảng so sánh và nhận xét cụ thể.
-
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày toàn bộ quá trình triển khai ANN bằng NumPy, huấn luyện, so sánh siêu tham số, phân tích lỗi và kiểm thử trên nét vẽ thực tế.
+Chương này trình bày quá trình triển khai, huấn luyện và đánh giá mô hình ANN bằng `NumPy` theo đúng mã nguồn `ann.py`. Các thông tin cố định như cách chia dữ liệu, kiến trúc, learning rate, số iteration và phương pháp khởi tạo được lấy trực tiếp từ code. Các kết quả cần chạy chương trình như accuracy cuối cùng, loss cuối cùng, biểu đồ và confusion matrix không được tự suy đoán.
 
 ---
 
 ## 3.1. Thiết kế thực nghiệm
 
-Thiết kế thực nghiệm xác định cách dữ liệu được xử lý, mô hình được huấn luyện và kết quả được đánh giá. Phần này cần mô tả rõ các điều kiện thực nghiệm để bảo đảm kết quả có thể được kiểm chứng lại.
-
-> 🛑 **[HÀNH ĐỘNG]**: Mô tả môi trường, dữ liệu, quy trình huấn luyện và cách đánh giá mô hình.
+Thiết kế thực nghiệm trong `ann.py` gồm các bước: đọc dữ liệu CSV, shuffle dữ liệu train, chia tập dev/train, chuẩn hóa pixel, khởi tạo tham số, huấn luyện bằng Batch Gradient Descent, in loss/accuracy định kỳ, lưu mô hình vào `model_weights.npz` và demo dự đoán trên `test.csv`.
 
 ---
 
 ### 3.1.1. Môi trường chạy
 
-Môi trường chạy ảnh hưởng đến tốc độ huấn luyện và khả năng tái lập kết quả. Cần ghi rõ các công cụ, thư viện và cấu hình cơ bản được sử dụng trong quá trình thực nghiệm.
+Mã nguồn sử dụng Python cùng các thư viện:
+- `NumPy` cho tính toán ma trận.
+- `Pandas` để đọc file `train.csv` và `test.csv`.
+- `Matplotlib` để hiển thị ảnh demo.
+- `os` để kiểm tra file `model_weights.npz`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Nêu ngôn ngữ Python, các thư viện NumPy, Pandas, Matplotlib và cấu hình máy nếu cần.
+Cấu hình phần cứng thực nghiệm được ghi nhận là: Workstation Dual Xeon 2676, 64GB RAM, GPU GTX 1050Ti.
+
+Lưu ý: code hiện tại chỉ dùng `NumPy` CPU, không có lệnh sử dụng GPU.
 
 ---
 
 ### 3.1.2. Cách chia tập train/dev/test demo
 
-Việc chia dữ liệu cần được mô tả chính xác để tránh nhầm lẫn giữa đánh giá có nhãn và minh họa dự đoán không nhãn. Tập dev được dùng để đánh giá trong khi các ảnh demo có thể dùng để trực quan hóa kết quả.
+Trong `ann.py`, dữ liệu có nhãn được đọc từ `train.csv`:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cách chia dữ liệu có nhãn thành train/dev và làm rõ test demo chỉ dùng để trực quan hóa nếu không có nhãn.
+```python
+data = pd.read_csv('train.csv')
+data = np.array(data)
+m, n = data.shape
+np.random.shuffle(data)
+```
+
+Sau khi shuffle, code chia dữ liệu:
+
+```python
+data_dev = data[0:4000].T
+data_train = data[4000:m].T
+```
+
+Tập dev gồm 4000 mẫu đầu tiên sau khi shuffle. Tập train gồm các mẫu từ vị trí 4000 đến hết dữ liệu.
+
+Nhãn và đặc trưng được tách như sau:
+
+```python
+Y_dev = data_dev[0]
+X_dev = data_dev[1:n]
+Y_train = data_train[0]
+X_train = data_train[1:n]
+```
+
+Tập test được đọc từ `test.csv`, shuffle, lấy 10000 mẫu đầu và chuẩn hóa:
+
+```python
+test_data = pd.read_csv('test.csv')
+test_data = np.array(test_data)
+np.random.shuffle(test_data)
+test_data = test_data[0:10000].T
+X_test = test_data / 255.
+```
+
+Trong code hiện tại, `test.csv` chỉ được dùng để demo dự đoán và hiển thị ảnh, không dùng để tính accuracy vì không có nhãn test trong chương trình.
 
 ---
 
 ### 3.1.3. Quy trình huấn luyện
 
-Quy trình huấn luyện gồm các bước lặp lại nhằm tối ưu tham số của mô hình. Mỗi vòng lặp cần thực hiện lan truyền tiến, tính loss, lan truyền ngược và cập nhật trọng số.
+Quy trình huấn luyện được cài đặt trong hàm `gradient_descent(X, Y, alpha, iterations)`. Mỗi iteration thực hiện các bước:
 
-> 🛑 **[HÀNH ĐỘNG]**: Mô tả vòng lặp huấn luyện gồm forward propagation, tính loss, backward propagation và update tham số.
+1. Lan truyền tiến bằng `forward_prop`.
+2. Tính gradient bằng `backward_prop`.
+3. Cập nhật tham số bằng `update_params`.
+4. Mỗi 10 iteration, in train loss, train accuracy, dev loss và dev accuracy.
+
+Code chính:
+
+```python
+for i in range(iterations):
+    Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, X)
+    dW1, db1, dW2, db2 = backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y)
+    W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
+```
 
 ---
 
 ### 3.1.4. Quy trình đánh giá
 
-Quy trình đánh giá giúp đo chất lượng mô hình sau hoặc trong quá trình huấn luyện. Các chỉ số định lượng cần đi kèm với phân tích lỗi để đưa ra nhận xét có cơ sở.
+Trong quá trình huấn luyện, code đánh giá mô hình sau mỗi 10 iteration. Train metrics được tính trên $X$ và $Y$ truyền vào `gradient_descent`. Dev metrics được tính bằng cách forward trên `X_dev` và so sánh với `Y_dev`.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cách tính loss, accuracy, confusion matrix và chọn mẫu sai để phân tích.
+Các chỉ số được in:
+- `Train loss`
+- `Train accurancy`
+- `Dev loss`
+- `Dev accurancy`
+
+Trong code hiện tại chưa có hàm confusion matrix và chưa có cơ chế lưu lịch sử metrics ra file. Vì vậy, bảng kết quả, biểu đồ và confusion matrix cần lấy từ terminal hoặc bổ sung script đánh giá riêng.
+
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ## 3.2. Cấu hình mô hình cơ sở
 
-Mô hình cơ sở đóng vai trò baseline để so sánh với các cấu hình thực nghiệm khác. Cấu hình này cần được mô tả rõ về kiến trúc, learning rate, số iteration và cách khởi tạo tham số.
+Cấu hình baseline trong `ann.py` được xác định tại đoạn cuối file. Nếu tồn tại `model_weights.npz`, code tải mô hình đã lưu. Nếu chưa tồn tại, code huấn luyện mô hình bằng `gradient_descent(X_train, Y_train, 0.1, 500)` và lưu lại tham số.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cấu hình ban đầu được dùng làm baseline cho các thí nghiệm tiếp theo.
+```python
+if os.path.exists("model_weights.npz"):
+    W1, b1, W2, b2 = load_model()
+else:
+    W1, b1, W2, b2 = gradient_descent(X_train, Y_train, 0.1, 500)
+    save_model(W1, b1, W2, b2)
+```
 
 ---
 
 ### 3.2.1. Kiến trúc $784 \rightarrow 128 \rightarrow 10$
 
-Kiến trúc baseline sử dụng một tầng ẩn để cân bằng giữa độ đơn giản và khả năng học phi tuyến. Đây là cấu trúc chính được sử dụng xuyên suốt trong quá trình thực nghiệm.
+Baseline sử dụng kiến trúc:
 
-> 🛑 **[HÀNH ĐỘNG]**: Mô tả mô hình baseline gồm 784 đầu vào, 128 neuron tầng ẩn và 10 đầu ra.
+$$
+784 \rightarrow 128 \rightarrow 10
+$$
+
+Kiến trúc này được xác nhận bởi shape của các tham số trong `init_params()`:
+- `W1`: `(128, 784)`
+- `b1`: `(128, 1)`
+- `W2`: `(10, 128)`
+- `b2`: `(10, 1)`
+
+Tầng ẩn dùng ReLU, tầng đầu ra dùng Softmax.
 
 ---
 
 ### 3.2.2. Learning rate mặc định
 
-Learning rate quyết định độ lớn bước cập nhật tham số trong mỗi iteration. Giá trị mặc định cần được chọn hợp lý để mô hình có thể hội tụ mà không dao động quá mạnh.
+Learning rate mặc định trong baseline là:
 
-> 🛑 **[HÀNH ĐỘNG]**: Nêu giá trị learning rate ban đầu và lý do chọn làm điểm xuất phát thực nghiệm.
+$$
+\alpha = 0.1
+$$
+
+Giá trị này được truyền trực tiếp trong lệnh:
+
+```python
+gradient_descent(X_train, Y_train, 0.1, 500)
+```
+
+Trong code, biến learning rate được đặt tên là `alpha` và được dùng trong `update_params`.
 
 ---
 
 ### 3.2.3. Số iteration mặc định
 
-Số iteration quyết định số lần mô hình cập nhật tham số trong quá trình huấn luyện. Việc chọn số iteration cần đủ lớn để mô hình học được nhưng không quá lớn gây lãng phí thời gian.
+Số iteration baseline là:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày số vòng lặp huấn luyện baseline và cách ghi log theo các mốc iteration.
+$$
+500
+$$
+
+Giá trị này cũng được truyền trực tiếp trong:
+
+```python
+gradient_descent(X_train, Y_train, 0.1, 500)
+```
+
+Code ghi log sau mỗi 10 iteration bằng điều kiện:
+
+```python
+if i % 10 == 0:
+```
+
+Vì vậy, các mốc log gồm $0$, $10$, $20$, ..., $490$.
 
 ---
 
 ### 3.2.4. Phương pháp khởi tạo trọng số
 
-Khởi tạo trọng số ảnh hưởng trực tiếp đến quá trình hội tụ của mạng nơ-ron. Cần mô tả cách khởi tạo được sử dụng và nêu nhận xét về vai trò của nó trong thực nghiệm.
+Các tham số được khởi tạo trong `init_params()` bằng `np.random.rand(...) - 0.5`. Cụ thể:
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày cách khởi tạo `W1`, `b1`, `W2`, `b2` và nhận xét ảnh hưởng của khởi tạo đến quá trình học.
+```python
+W1 = np.random.rand(128, 784) - 0.5
+b1 = np.random.rand(128, 1) - 0.5
+W2 = np.random.rand(10, 128) - 0.5
+b2 = np.random.rand(10, 1) - 0.5
+```
+
+Điều này có nghĩa là các giá trị ban đầu nằm trong khoảng xấp xỉ $[-0.5, 0.5)$. Code hiện tại không sử dụng He Initialization hoặc Xavier Initialization.
 
 ---
 
 ## 3.3. Kết quả mô hình cơ sở
 
-Kết quả mô hình cơ sở cung cấp cái nhìn ban đầu về khả năng học của ANN trước khi thay đổi các siêu tham số. Các kết quả cần được trình bày bằng bảng và biểu đồ để dễ phân tích.
-
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày kết quả định lượng đầu tiên của mô hình baseline.
+Các kết quả định lượng của mô hình cơ sở phải lấy từ terminal khi chạy `ann.py`. Theo yêu cầu không chạy code và không tự suy đoán số liệu, các bảng, biểu đồ và nhận xét định lượng trong mục này được giữ ở trạng thái chờ điền từ kết quả thực nghiệm.
 
 ---
 
 ### 3.3.1. Bảng loss và accuracy theo iteration
 
-Bảng kết quả theo iteration giúp theo dõi sự thay đổi của loss và accuracy trong quá trình huấn luyện. Đây là căn cứ quan trọng để nhận xét mô hình có đang hội tụ hay không.
-
-> 🛑 **[HÀNH ĐỘNG]**: Chèn bảng gồm các mốc iteration và các giá trị train loss, dev loss, train accuracy, dev accuracy.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.3.2. Biểu đồ train/dev loss
 
-Biểu đồ loss giúp trực quan hóa xu hướng giảm sai số trong quá trình học. Sự khác biệt giữa train loss và dev loss cũng có thể cho thấy dấu hiệu overfitting hoặc underfitting.
-
-> 🛑 **[HÀNH ĐỘNG]**: Chèn biểu đồ đường thể hiện loss giảm theo thời gian và nhận xét tốc độ hội tụ.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.3.3. Biểu đồ train/dev accuracy
 
-Biểu đồ accuracy giúp quan sát mức cải thiện khả năng phân loại của mô hình theo thời gian. Việc so sánh train accuracy và dev accuracy giúp đánh giá khả năng tổng quát hóa.
-
-> 🛑 **[HÀNH ĐỘNG]**: Chèn biểu đồ accuracy để so sánh khả năng học trên train và khả năng tổng quát hóa trên dev.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.3.4. Nhận xét về tốc độ hội tụ
 
-Tốc độ hội tụ phản ánh mức độ hiệu quả của cấu hình huấn luyện ban đầu. Phần nhận xét cần dựa trên số liệu và biểu đồ đã trình bày, không đưa ra kết luận cảm tính.
-
-> 🛑 **[HÀNH ĐỘNG]**: Phân tích mô hình học nhanh hay chậm, có dao động hay không và loss/accuracy có ổn định về cuối quá trình học không.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ## 3.4. So sánh siêu tham số
 
-So sánh siêu tham số giúp đánh giá ảnh hưởng của các lựa chọn cấu hình đến chất lượng mô hình. Phần này cần giữ các điều kiện thí nghiệm nhất quán để kết quả so sánh có ý nghĩa.
+Trong `ann.py` hiện tại, chỉ có một cấu hình huấn luyện baseline được gọi trực tiếp: learning rate $\alpha = 0.1$, số iteration $500$, hidden size $128$. Code chưa có vòng lặp tự động để so sánh nhiều learning rate, nhiều số neuron tầng ẩn hoặc nhiều số iteration.
 
-> 🛑 **[HÀNH ĐỘNG]**: Trình bày các thí nghiệm thay đổi learning rate và số neuron tầng ẩn để tìm cấu hình phù hợp.
+Vì vậy, các kết quả so sánh siêu tham số cần được sinh từ terminal sau khi chạy thêm các cấu hình thực nghiệm.
 
 ---
 
 ### 3.4.1. Ảnh hưởng của learning rate
 
-Learning rate là một trong những siêu tham số quan trọng nhất của Gradient Descent. Giá trị quá nhỏ có thể khiến mô hình học chậm, trong khi giá trị quá lớn có thể làm quá trình tối ưu dao động hoặc không hội tụ.
+Code hiện tại chỉ chạy baseline với:
 
-> 🛑 **[HÀNH ĐỘNG]**: So sánh các learning rate như 0.01, 0.05, 0.1, 0.2 trên cùng kiến trúc và cùng số iteration.
+$$
+\alpha = 0.1
+$$
+
+Các learning rate khác như $0.01$, $0.05$ hoặc $0.2$ chưa được chạy tự động trong `ann.py`.
+
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.4.2. Ảnh hưởng của số neuron tầng ẩn
 
-Số neuron tầng ẩn quyết định năng lực biểu diễn của mô hình. Tầng ẩn quá nhỏ có thể không học đủ đặc trưng, trong khi tầng ẩn quá lớn có thể làm tăng chi phí tính toán.
+Code hiện tại cố định hidden size bằng $128$ thông qua shape của `W1`, `b1`, `W2`:
 
-> 🛑 **[HÀNH ĐỘNG]**: So sánh các cấu hình hidden layer như 64, 128, 256 neuron để đánh giá năng lực biểu diễn và chi phí tính toán.
+```python
+W1 = np.random.rand(128, 784) - 0.5
+b1 = np.random.rand(128, 1) - 0.5
+W2 = np.random.rand(10, 128) - 0.5
+```
+
+Các cấu hình hidden layer như $64$ hoặc $256$ neuron chưa được chạy tự động trong `ann.py`.
+
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.4.3. Ảnh hưởng của số iteration
 
-Số iteration ảnh hưởng đến mức độ mô hình được tối ưu sau quá trình huấn luyện. Khi tăng số iteration, mô hình có thể cải thiện đến một ngưỡng nhất định trước khi kết quả bắt đầu bão hòa.
+Code hiện tại chạy baseline với:
 
-> 🛑 **[HÀNH ĐỘNG]**: Phân tích mô hình cải thiện đến mức nào khi tăng số iteration và xác định khi nào kết quả bắt đầu bão hòa.
+$$
+iterations = 500
+$$
+
+Các giá trị iteration khác chưa được chạy tự động trong `ann.py`.
+
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.4.4. So sánh các cấu hình thực nghiệm
 
-Bảng so sánh các cấu hình giúp tổng hợp toàn bộ kết quả thực nghiệm một cách rõ ràng. Các giá trị cần được trình bày nhất quán để thuận tiện cho việc lựa chọn mô hình cuối cùng.
-
-> 🛑 **[HÀNH ĐỘNG]**: Chèn bảng tổng hợp nhiều cấu hình gồm learning rate, số neuron, số iteration, train/dev accuracy, train/dev loss và thời gian huấn luyện nếu có.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
 
 ### 3.4.5. Lựa chọn cấu hình cuối cùng
 
-Cấu hình cuối cùng cần được chọn dựa trên kết quả thực nghiệm, không chỉ dựa trên accuracy cao nhất. Cần cân nhắc thêm độ ổn định, chi phí tính toán và mức độ phù hợp với mục tiêu nhập môn.
-
-> 🛑 **[HÀNH ĐỘNG]**: Kết luận cấu hình được chọn dựa trên cân bằng giữa độ chính xác, độ ổn định, thời gian huấn luyện và độ đơn giản của mô hình.
+[CHỜ ĐIỀN SỐ LIỆU/ẢNH TỪ TERMINAL]
 
 ---
-
 ## 3.5. Đánh giá bằng confusion matrix
 
 Confusion matrix giúp phân tích hiệu năng của mô hình theo từng lớp chữ số. Đây là công cụ quan trọng để phát hiện các nhóm chữ số thường bị nhầm lẫn với nhau.
