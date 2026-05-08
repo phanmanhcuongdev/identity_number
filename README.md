@@ -2,7 +2,7 @@
 
 ## Giới thiệu
 
-Dự án xây dựng hệ thống nhận diện chữ số viết tay dựa trên mạng nơ-ron nhân tạo Fully Connected, huấn luyện trên Infinity Dataset gồm 10,000,000 mẫu ở định dạng `.npy`. Phần lõi inference được cài đặt bằng `NumPy`, không phụ thuộc framework deep learning cấp cao.
+Dự án xây dựng hệ thống nhận diện chữ số viết tay dựa trên mạng nơ-ron nhân tạo kết nối đầy đủ, huấn luyện trên Infinity Dataset gồm 10,000,000 mẫu ở định dạng `.npy`. Phần lõi suy luận được cài đặt bằng `NumPy`, không phụ thuộc framework deep learning cấp cao.
 
 Dataset đã sinh sẵn được lưu trên Google Drive:
 
@@ -15,7 +15,7 @@ Project gồm ba phần chính:
 - Mô hình Deep ANN để phân loại chữ số `0` đến `9`.
 - Flask Web App cho phép vẽ chữ số trên canvas và dự đoán trực tiếp.
 - Script tạo Infinity Dataset từ EMNIST digits bằng augmentation.
-- Script sinh tài sản báo cáo: loss curve, accuracy curve, confusion matrix, mẫu dự đoán sai và sơ đồ preprocessing.
+- Script sinh tài sản báo cáo: loss curve, accuracy curve, ma trận nhầm lẫn, mẫu dự đoán sai, `evaluation_metrics.txt` và sơ đồ tiền xử lý.
 
 ## Model Architecture
 
@@ -37,11 +37,13 @@ File trọng số cuối cùng được đặt tại:
 weights/model_infinity.npz
 ```
 
+Lưu ý: checkpoint lưu trọng số theo quy ước huấn luyện của `scripts/train_infinity.py`, ví dụ `W1=(784, 1024)`. Khi suy luận, `ann.py` tự chuẩn hóa shape về quy ước `W @ X + b`, ví dụ `W1=(1024, 784)`.
+
 ## Cấu trúc thư mục
 
 ```text
 .
-├── ann.py                         # Forward propagation và load model
+├── ann.py                         # Lan truyền tiến và load model
 ├── app.py                         # Flask backend cho Web Demo
 ├── templates/
 │   └── index.html                 # Giao diện vẽ chữ số
@@ -49,7 +51,7 @@ weights/model_infinity.npz
 │   └── script.js                  # Logic canvas, touch drawing và gọi predict
 ├── scripts/
 │   ├── generate_infinity.py       # Tạo data/train_infinity.npy và data/labels_infinity.npy
-│   ├── generate_report_assets.py  # Sinh ảnh báo cáo
+│   ├── generate_report_assets.py  # Sinh ảnh và metric báo cáo
 │   └── train_infinity.py          # Script huấn luyện Deep ANN
 ├── weights/
 │   └── model_infinity.npz         # Model cuối cùng
@@ -106,7 +108,7 @@ http://127.0.0.1:5000
 
 Khi chạy trong Docker hoặc truy cập từ thiết bị khác trong cùng mạng LAN, Flask lắng nghe trên `0.0.0.0:5000`.
 
-Pipeline preprocessing trong Flask giữ ảnh vẽ gần định dạng MNIST: decode canvas, grayscale, invert, threshold, crop bounding box, căn giữa, resize `28 x 28`, normalize và flatten thành vector `784 x 1`.
+Pipeline tiền xử lý trong Flask giữ ảnh vẽ gần định dạng MNIST: decode canvas, chuyển ảnh xám, đảo màu, threshold, crop bounding box, căn giữa, resize `28 x 28`, chuẩn hóa và trải phẳng thành vector `784 x 1`.
 
 ## Docker
 
@@ -185,8 +187,11 @@ loss_curve.png
 accuracy_curve.png
 confusion_matrix.png
 misclassified_samples.png
+evaluation_metrics.txt
 images/preprocessing_pipeline.png
 ```
+
+`evaluation_metrics.txt` được tính trên 10,000 mẫu cuối của dataset bằng mô hình cuối cùng, gồm Accuracy, Macro Precision, Macro Recall, Macro F1-Score và classification report cho từng nhãn `0` đến `9`. Đây là bước đánh giá hậu huấn luyện, không can thiệp vào logic train.
 
 ## Tạo Infinity Dataset
 
@@ -236,16 +241,40 @@ Ví dụ chạy từ thư mục gốc project:
 
 Script sử dụng kiến trúc `784 -> 1024 -> 512 -> 256 -> 10` và optimizer Adam.
 
+Thông số mặc định chính:
+
+```text
+Epochs: 20
+Batch size: 4096
+Validation size: 100,000
+Initial learning rate: 0.001
+Learning rate decay: 0.92 per epoch
+Weight decay: 1e-5
+Adam beta1/beta2/epsilon: 0.9 / 0.999 / 1e-8
+```
+
+Tập validation được chọn bằng hoán vị ngẫu nhiên với seed cố định trong `scripts/train_infinity.py`, không phải bằng cách lấy tuần tự một đoạn cuối dataset.
+
 ## Kết quả
 
 Theo log huấn luyện 20 epoch, cấu hình Infinity đạt xấp xỉ:
 
 ```text
 Training Accuracy:   99.44%
-Validation Accuracy: 98.82% - 98.84%
+Validation Accuracy: 98.82%
+Validation Loss:     0.0393
 ```
 
-Con số `99.44%` là accuracy trên training batch cuối của epoch 20. Validation accuracy cuối nằm quanh `98.8%`.
+Kết quả đánh giá bổ sung trên 10,000 mẫu cuối của dataset:
+
+```text
+Evaluation Accuracy:        99.57%
+Macro Precision:            99.57%
+Macro Recall:               99.57%
+Macro F1-Score:             99.57%
+```
+
+Các số liệu chi tiết theo từng lớp nằm trong `evaluation_metrics.txt` và đã được tổng hợp vào `report.md`.
 
 ## Git Policy
 
