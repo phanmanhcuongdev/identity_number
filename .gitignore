@@ -34,6 +34,11 @@ weights/*
 *.png
 images/*
 !images/.gitkeep
+!accuracy_curve.png
+!confusion_matrix.png
+!loss_curve.png
+!misclassified_samples.png
+!images/preprocessing_pipeline.png
 
 # Temporary and OS files
 *.tmp
