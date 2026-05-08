@@ -155,7 +155,7 @@ Dữ liệu MNIST đã được chuẩn hóa tốt, trong khi ảnh chữ số d
 
 ### 1.2.4. Phạm vi: MNIST, Infinity Dataset, Deep ANN, NumPy, Adam Optimizer
 
-Dữ liệu huấn luyện được tạo bằng `scripts/generate_infinity.py`, sau đó lưu tại `data/train_infinity.npy` và `data/labels_infinity.npy`. Model cuối cùng được lưu tại `weights/model_infinity.npz`. `ann.py` chỉ chứa logic inference, còn `scripts/train_infinity.py` chứa logic huấn luyện và backpropagation.
+Dữ liệu huấn luyện được tạo bằng `scripts/generate_infinity.py`, sau đó lưu tại `data/train_infinity.npy` và `data/labels_infinity.npy`. Bộ dữ liệu đã sinh sẵn được lưu trên Google Drive tại `https://drive.google.com/drive/folders/1tYDnYPMoEaS70Fgb2cK29Fft5eoG4fvz?usp=drive_link` để thuận tiện cho việc tái lập thực nghiệm. Model cuối cùng được lưu tại `weights/model_infinity.npz`. `ann.py` chỉ chứa logic inference, còn `scripts/train_infinity.py` chứa logic huấn luyện và backpropagation.
 
 ---
 
@@ -260,7 +260,7 @@ Dữ liệu được tạo bằng `scripts/generate_infinity.py` và được đ
 
 Với 10,000,000 mẫu, cấu hình thực nghiệm dùng 100,000 mẫu validation và 9,900,000 mẫu train. Dữ liệu được lưu dưới dạng `.npy` để phù hợp với pipeline huấn luyện bằng `NumPy` và quy mô Infinity Dataset.
 
-Script `scripts/generate_infinity.py` sử dụng EMNIST digits làm dữ liệu gốc, sau đó áp dụng rotation, scaling, elastic distortion và nhiễu Gaussian nhẹ để tạo các biến thể chữ số viết tay. Output mặc định của script là `data/train_infinity.npy` và `data/labels_infinity.npy`.
+Script `scripts/generate_infinity.py` sử dụng EMNIST digits làm dữ liệu gốc, sau đó áp dụng rotation, scaling, elastic distortion và nhiễu Gaussian nhẹ để tạo các biến thể chữ số viết tay. Output mặc định của script là `data/train_infinity.npy` và `data/labels_infinity.npy`. Ngoài cách tự tạo lại dataset, người đọc có thể tải bản đã sinh sẵn từ Google Drive: `https://drive.google.com/drive/folders/1tYDnYPMoEaS70Fgb2cK29Fft5eoG4fvz?usp=drive_link`.
 
 ---
 
@@ -1060,7 +1060,7 @@ def get_predictions(A4):
 
 ## Phụ lục B. Script huấn luyện `scripts/train_infinity.py`
 
-Trước khi huấn luyện, dataset được tạo bằng `scripts/generate_infinity.py`. Script này sử dụng EMNIST digits làm dữ liệu gốc và sinh thêm biến thể bằng rotation, scaling, elastic distortion và nhiễu Gaussian nhẹ. Hai file đầu ra mặc định là `data/train_infinity.npy` và `data/labels_infinity.npy`.
+Trước khi huấn luyện, dataset được tạo bằng `scripts/generate_infinity.py`. Script này sử dụng EMNIST digits làm dữ liệu gốc và sinh thêm biến thể bằng rotation, scaling, elastic distortion và nhiễu Gaussian nhẹ. Hai file đầu ra mặc định là `data/train_infinity.npy` và `data/labels_infinity.npy`. Dataset đã sinh sẵn được lưu tại Google Drive: `https://drive.google.com/drive/folders/1tYDnYPMoEaS70Fgb2cK29Fft5eoG4fvz?usp=drive_link`.
 
 Script huấn luyện chịu trách nhiệm nạp `data/train_infinity.npy`, `data/labels_infinity.npy`, khởi tạo mô hình, chạy forward propagation, backpropagation, Adam update, đánh giá validation và lưu checkpoint.
 

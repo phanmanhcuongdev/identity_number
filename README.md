@@ -4,6 +4,12 @@
 
 Dự án xây dựng hệ thống nhận diện chữ số viết tay dựa trên mạng nơ-ron nhân tạo Fully Connected, huấn luyện trên Infinity Dataset gồm 10,000,000 mẫu ở định dạng `.npy`. Phần lõi inference được cài đặt bằng `NumPy`, không phụ thuộc framework deep learning cấp cao.
 
+Dataset đã sinh sẵn được lưu trên Google Drive:
+
+```text
+https://drive.google.com/drive/folders/1tYDnYPMoEaS70Fgb2cK29Fft5eoG4fvz?usp=drive_link
+```
+
 Project gồm ba phần chính:
 
 - Mô hình Deep ANN để phân loại chữ số `0` đến `9`.
@@ -105,6 +111,8 @@ data/train_infinity.npy
 data/labels_infinity.npy
 ```
 
+Nếu chưa có hai file `.npy`, tải từ Google Drive dataset ở phần giới thiệu hoặc tự tạo bằng `scripts/generate_infinity.py`.
+
 Chạy:
 
 ```powershell
@@ -127,6 +135,12 @@ Script tạo dataset nằm tại:
 
 ```text
 scripts/generate_infinity.py
+```
+
+Dataset đã tạo sẵn có thể tải tại:
+
+```text
+https://drive.google.com/drive/folders/1tYDnYPMoEaS70Fgb2cK29Fft5eoG4fvz?usp=drive_link
 ```
 
 Script sử dụng EMNIST digits làm dữ liệu gốc, sau đó sinh thêm mẫu bằng rotation, scaling, elastic distortion và Gaussian noise. Output mặc định:
