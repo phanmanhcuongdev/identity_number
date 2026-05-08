@@ -12,21 +12,37 @@ dist/
 venv/
 env/
 
-# Jupyter
-.ipynb_checkpoints/
-
-# Logs and temporary files
-*.log
-*.tmp
-*.temp
-
-# Trained model weights generated locally
-*.npz
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Local IDE state
+# IDE and notebook state
 .idea/workspace.xml
 .idea/vcs.xml
+.ipynb_checkpoints/
+
+# Large local datasets and training logs
+data/*
+!data/.gitkeep
+*.npy
+*.csv
+*.log
+!train.log
+
+# Model checkpoints and local weights
+*.npz
+weights/*
+!weights/.gitkeep
+!weights/.gitkeep
+
+# Generated report assets
+*.png
+images/*
+!images/.gitkeep
+!accuracy_curve.png
+!confusion_matrix.png
+!loss_curve.png
+!misclassified_samples.png
+!images/preprocessing_pipeline.png
+
+# Temporary and OS files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

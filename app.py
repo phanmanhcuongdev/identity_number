@@ -1,5 +1,6 @@
 import base64
 from io import BytesIO
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -12,7 +13,13 @@ from ann import forward_prop, load_model
 app = Flask(__name__)
 
 # Load trained weights once when the server starts.
-W1, b1, W2, b2 = load_model("model_weights.npz")
+MODEL_PATH = Path(__file__).resolve().parent / "weights" / "model_infinity.npz"
+model_params = None
+try:
+    model_params = load_model(MODEL_PATH)
+    print("Da nap thanh cong bo nao Infinity 10 trieu mau!")
+except Exception as e:
+    print(f"Loi nap model: {e}")
 
 
 def preprocess_canvas_image(image_data):
@@ -70,8 +77,11 @@ def predict():
     if X is None:
         return jsonify({"error": "No digit detected"}), 400
 
-    _, _, _, A2 = forward_prop(W1, b1, W2, b2, X)
-    probabilities = A2[:, 0]
+    if model_params is None:
+        return jsonify({"error": "Model is not loaded"}), 500
+
+    _, _, _, _, _, _, _, A4 = forward_prop(*model_params, X)
+    probabilities = A4[:, 0]
     prediction = int(np.argmax(probabilities))
     confidence = float(probabilities[prediction])
 
