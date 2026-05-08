@@ -238,13 +238,13 @@ Trong đó $\theta$ gồm bốn tầng trọng số và độ lệch của mô h
 
 ### 2.1.1. Đầu vào của bài toán
 
-Đầu vào của mô hình là ảnh xám kích thước $28 \times 28$, được trải phẳng thành vector $784$ chiều. Trong pha suy luận của `ann.py`, vector này được đưa vào ma trận trọng số đầu tiên `W1` sau khi đã được chuẩn hóa về kích thước $(1024, 784)$.
+Đầu vào của mô hình là ảnh xám kích thước $28 \times 28$, được trải phẳng thành vector $784$ chiều. Trong pha suy luận của `ann.py`, vector này được đưa vào ma trận trọng số đầu tiên `W1` sau khi đã được chuẩn hóa về kích thước $1024 \times 784$.
 
 ---
 
 ### 2.1.2. Đầu ra của bài toán
 
-Đầu ra là vector xác suất trên 10 lớp chữ số. Trong pha suy luận, tầng cuối sử dụng `W4` kích thước $(10, 256)$ và `b4` kích thước $(10, 1)`. Hàm `get_predictions(A4)` chọn lớp có xác suất lớn nhất bằng `np.argmax(A4, 0)`.
+Đầu ra là vector xác suất trên 10 lớp chữ số. Trong pha suy luận, tầng cuối sử dụng `W4` kích thước $10 \times 256$ và `b4` kích thước $10 \times 1$. Hàm `get_predictions(A4)` chọn lớp có xác suất lớn nhất bằng `np.argmax(A4, 0)`.
 
 ---
 
@@ -410,13 +410,13 @@ dW^{[4]} = \frac{1}{m} dZ^{[4]} \cdot (A^{[3]})^T
 $$
 
 $$
-db^{[4]} = \frac{1}{m} \sum_{i=1}^{m} dZ^{[4](i)}
+db^{[4]} = \frac{1}{m} \sum_{i=1}^{m} dZ_i^{[4]}
 $$
 
 Với các tầng ẩn, sai số được truyền ngược qua trọng số của tầng phía sau và nhân với đạo hàm của hàm kích hoạt. Vì mô hình dùng ReLU ở các tầng ẩn, đạo hàm $g'(Z^{[l]})$ cho biết neuron nào còn truyền gradient:
 
 $$
-dZ^{[l]} = (W^{[l+1]}^T \cdot dZ^{[l+1]}) * g'(Z^{[l]})
+dZ^{[l]} = \left((W^{[l+1]})^T \cdot dZ^{[l+1]}\right) \odot g'(Z^{[l]})
 $$
 
 Gradient của trọng số tại tầng $l$ được tính bằng:
@@ -592,7 +592,7 @@ Checkpoint `weights/model_infinity.npz` lưu trọng số theo quy ước huấn
 - `W4`: `(256, 10)`
 - `b4`: `(10,)`
 
-Khi chạy suy luận, `ann.py` dùng `_normalize_weight_shape()` để chuyển các ma trận trọng số về quy ước $W^{[l]}A^{[l-1]} + b^{[l]}$, tương ứng với `W1` $(1024, 784)$, `W2` $(512, 1024)$, `W3` $(256, 512)$ và `W4` $(10, 256)$. Các vector độ lệch được `_as_column_bias()` đưa về dạng cột.
+Khi chạy suy luận, `ann.py` dùng `_normalize_weight_shape()` để chuyển các ma trận trọng số về quy ước $W^{[l]}A^{[l-1]} + b^{[l]}$, tương ứng với `W1` $1024 \times 784$, `W2` $512 \times 1024$, `W3` $256 \times 512$ và `W4` $10 \times 256$. Các vector độ lệch được `_as_column_bias()` đưa về dạng cột.
 
 ---
 
