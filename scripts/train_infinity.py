@@ -37,8 +37,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Train a 784-1024-512-256-10 ANN on train_infinity.npy."
     )
-    parser.add_argument("--x-path", default="train_infinity.npy")
-    parser.add_argument("--y-path", default="labels_infinity.npy")
+    parser.add_argument("--x-path", default="data/train_infinity.npy")
+    parser.add_argument("--y-path", default="data/labels_infinity.npy")
     parser.add_argument("--checkpoint-dir", default="checkpoints_infinity")
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=4096)

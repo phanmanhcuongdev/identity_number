@@ -26,6 +26,7 @@ data/*
 !train.log
 
 # Model checkpoints and local weights
+checkpoints_infinity/
 *.npz
 weights/*
 !weights/.gitkeep

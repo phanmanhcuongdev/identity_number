@@ -2,12 +2,13 @@
 
 ## Giới thiệu
 
-Dự án xây dựng hệ thống nhận diện chữ số viết tay dựa trên mạng nơ-ron nhân tạo Fully Connected, huấn luyện trên bộ dữ liệu mở rộng khoảng 10 triệu mẫu (Infinity Dataset). Phần lõi inference được cài đặt bằng `NumPy`, không phụ thuộc framework deep learning cấp cao.
+Dự án xây dựng hệ thống nhận diện chữ số viết tay dựa trên mạng nơ-ron nhân tạo Fully Connected, huấn luyện trên Infinity Dataset gồm 10,000,000 mẫu ở định dạng `.npy`. Phần lõi inference được cài đặt bằng `NumPy`, không phụ thuộc framework deep learning cấp cao.
 
 Project gồm ba phần chính:
 
 - Mô hình Deep ANN để phân loại chữ số `0` đến `9`.
 - Flask Web App cho phép vẽ chữ số trên canvas và dự đoán trực tiếp.
+- Script tạo Infinity Dataset từ EMNIST digits bằng augmentation.
 - Script sinh tài sản báo cáo: loss curve, accuracy curve, confusion matrix, mẫu dự đoán sai và sơ đồ preprocessing.
 
 ## Model Architecture
@@ -39,10 +40,11 @@ weights/model_infinity.npz
 ├── templates/
 │   └── index.html                 # Giao diện vẽ chữ số
 ├── scripts/
+│   ├── generate_infinity.py       # Tạo data/train_infinity.npy và data/labels_infinity.npy
 │   ├── generate_report_assets.py  # Sinh ảnh báo cáo
 │   └── train_infinity.py          # Script huấn luyện Deep ANN
 ├── weights/
-│   └── model_infinity.npz         # Model cuối cùng, không commit Git
+│   └── model_infinity.npz         # Model cuối cùng
 ├── data/
 │   ├── train_infinity.npy         # Dataset lớn, không commit Git
 │   └── labels_infinity.npy        # Label dataset, không commit Git
@@ -53,7 +55,7 @@ weights/model_infinity.npz
 └── README.md
 ```
 
-Các file dữ liệu lớn, log, checkpoint và ảnh sinh tự động đã được đưa vào `.gitignore`.
+Các file dữ liệu lớn và checkpoint trung gian đã được đưa vào `.gitignore`. Model cuối cùng, log huấn luyện và ảnh báo cáo đã được đưa vào repo để phục vụ đọc báo cáo.
 
 ## Cài đặt
 
@@ -119,6 +121,29 @@ misclassified_samples.png
 images/preprocessing_pipeline.png
 ```
 
+## Tạo Infinity Dataset
+
+Script tạo dataset nằm tại:
+
+```text
+scripts/generate_infinity.py
+```
+
+Script sử dụng EMNIST digits làm dữ liệu gốc, sau đó sinh thêm mẫu bằng rotation, scaling, elastic distortion và Gaussian noise. Output mặc định:
+
+```text
+data/train_infinity.npy
+data/labels_infinity.npy
+```
+
+Chạy từ thư mục gốc project:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\generate_infinity.py
+```
+
+Lưu ý: cấu hình mặc định tạo `10,000,000` mẫu và dùng `30` process, nên cần đủ CPU, RAM và dung lượng đĩa.
+
 ## Training
 
 Script huấn luyện nằm tại:
@@ -131,8 +156,6 @@ Ví dụ chạy từ thư mục gốc project:
 
 ```powershell
 .\.venv\Scripts\python.exe .\scripts\train_infinity.py `
-  --x-path data\train_infinity.npy `
-  --y-path data\labels_infinity.npy `
   --epochs 20 `
   --batch-size 4096 `
   --threads 30
@@ -156,9 +179,7 @@ Con số `99.44%` là accuracy trên training batch cuối của epoch 20. Valid
 Không commit các file sau:
 
 - Dataset lớn: `data/*.npy`, `*.csv`
-- Model/checkpoint: `weights/*.npz`, `*.npz`
-- Log huấn luyện: `*.log`
-- Ảnh sinh tự động: `*.png`, `images/*`
+- Checkpoint trung gian: `checkpoints_infinity/`, `*.npz` ngoài model cuối
 - Môi trường ảo/cache: `.venv/`, `__pycache__/`
 
-Các thư mục `data/`, `weights/`, `images/` được giữ lại bằng `.gitkeep` để repo có cấu trúc rõ ràng mà không đưa file nặng lên Git.
+Các thư mục `data/`, `weights/`, `images/` được giữ lại bằng `.gitkeep` để repo có cấu trúc rõ ràng. Riêng `weights/model_infinity.npz`, `train.log` và ảnh báo cáo được track để người đọc repo có đủ ngữ cảnh thực nghiệm.
