@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MNIST Digit Recognizer</title>
   <style>
     :root {
@@ -38,8 +38,9 @@
     }
 
     canvas {
-      width: 300px;
-      height: 300px;
+      width: min(300px, 100%);
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
       background: #ffffff;
       border: 2px solid #334e68;
       border-radius: 8px;
@@ -56,6 +57,7 @@
 
     button {
       min-width: 112px;
+      min-height: 44px;
       border: 0;
       border-radius: 6px;
       padding: 10px 16px;
@@ -117,101 +119,6 @@
     </section>
   </main>
 
-  <script>
-    const canvas = document.getElementById('drawCanvas');
-    const ctx = canvas.getContext('2d');
-    const clearBtn = document.getElementById('clearBtn');
-    const predictBtn = document.getElementById('predictBtn');
-    const predictionEl = document.getElementById('prediction');
-    const confidenceEl = document.getElementById('confidence');
-
-    let isDrawing = false;
-
-    function resetCanvas() {
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 15;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-    }
-
-    function getPoint(event) {
-      const rect = canvas.getBoundingClientRect();
-      const source = event.touches ? event.touches[0] : event;
-      return {
-        x: (source.clientX - rect.left) * (canvas.width / rect.width),
-        y: (source.clientY - rect.top) * (canvas.height / rect.height),
-      };
-    }
-
-    function startDrawing(event) {
-      event.preventDefault();
-      isDrawing = true;
-      const point = getPoint(event);
-      ctx.beginPath();
-      ctx.moveTo(point.x, point.y);
-    }
-
-    function draw(event) {
-      if (!isDrawing) return;
-      event.preventDefault();
-      const point = getPoint(event);
-      ctx.lineTo(point.x, point.y);
-      ctx.stroke();
-    }
-
-    function stopDrawing(event) {
-      if (event) event.preventDefault();
-      isDrawing = false;
-      ctx.closePath();
-    }
-
-    async function predictDigit() {
-      predictBtn.disabled = true;
-      predictionEl.textContent = '-';
-      confidenceEl.className = 'confidence';
-      confidenceEl.textContent = 'Đang dự đoán...';
-
-      try {
-        const response = await fetch('/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: canvas.toDataURL('image/png') }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Không thể dự đoán');
-        }
-
-        predictionEl.textContent = data.prediction;
-        confidenceEl.textContent = `Confidence: ${(data.confidence * 100).toFixed(2)}%`;
-      } catch (error) {
-        confidenceEl.className = 'confidence error';
-        confidenceEl.textContent = error.message;
-      } finally {
-        predictBtn.disabled = false;
-      }
-    }
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    window.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', stopDrawing, { passive: false });
-
-    clearBtn.addEventListener('click', () => {
-      resetCanvas();
-      predictionEl.textContent = '-';
-      confidenceEl.className = 'confidence';
-      confidenceEl.textContent = 'Vẽ một chữ số rồi bấm Predict';
-    });
-
-    predictBtn.addEventListener('click', predictDigit);
-
-    resetCanvas();
-  </script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

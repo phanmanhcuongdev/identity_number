@@ -45,6 +45,8 @@ weights/model_infinity.npz
 ├── app.py                         # Flask backend cho Web Demo
 ├── templates/
 │   └── index.html                 # Giao diện vẽ chữ số
+├── static/
+│   └── script.js                  # Logic canvas, touch drawing và gọi predict
 ├── scripts/
 │   ├── generate_infinity.py       # Tạo data/train_infinity.npy và data/labels_infinity.npy
 │   ├── generate_report_assets.py  # Sinh ảnh báo cáo
@@ -56,6 +58,10 @@ weights/model_infinity.npz
 │   └── labels_infinity.npy        # Label dataset, không commit Git
 ├── images/
 │   └── preprocessing_pipeline.png # Ảnh sinh tự động cho báo cáo
+├── .github/
+│   └── workflows/
+│       └── docker-ci.yml          # CI build/push Docker image
+├── Dockerfile
 ├── report.md
 ├── requirements.txt
 └── README.md
@@ -98,7 +104,60 @@ Mở trình duyệt:
 http://127.0.0.1:5000
 ```
 
+Khi chạy trong Docker hoặc truy cập từ thiết bị khác trong cùng mạng LAN, Flask lắng nghe trên `0.0.0.0:5000`.
+
 Pipeline preprocessing trong Flask giữ ảnh vẽ gần định dạng MNIST: decode canvas, grayscale, invert, threshold, crop bounding box, căn giữa, resize `28 x 28`, normalize và flatten thành vector `784 x 1`.
+
+## Docker
+
+Repo có sẵn `Dockerfile` dùng base image `python:3.13-slim`, cài các thư viện hệ thống cần thiết cho OpenCV và expose port `5000`.
+
+Build image local:
+
+```powershell
+docker build -t identity_number:local .
+```
+
+Chạy container:
+
+```powershell
+docker run --rm -p 5000:5000 identity_number:local
+```
+
+Sau đó mở:
+
+```text
+http://127.0.0.1:5000
+```
+
+## GitHub Actions Docker CI
+
+Workflow Docker nằm tại:
+
+```text
+.github/workflows/docker-ci.yml
+```
+
+Workflow chạy khi có push vào nhánh `main`, build image bằng Docker Buildx và push lên Docker Hub với hai tag:
+
+```text
+latest
+<short-sha>
+```
+
+Cần cấu hình hai GitHub Secrets trong repository:
+
+```text
+DOCKERHUB_USERNAME
+DOCKERHUB_TOKEN
+```
+
+Image được push theo dạng:
+
+```text
+<DOCKERHUB_USERNAME>/identity_number:latest
+<DOCKERHUB_USERNAME>/identity_number:<short-sha>
+```
 
 ## Sinh ảnh báo cáo
 
