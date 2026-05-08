@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, precision_score, recall_score
 
 from ann import forward_prop, load_model
 
@@ -163,13 +163,13 @@ def load_eval_data(x_path=X_PATH, y_path=Y_PATH, sample_count=EVAL_SAMPLES):
         raise ValueError(f"X must be 2D, got shape {X.shape}")
 
     if X.shape[1] == 784:
-        X_eval = np.asarray(X[:sample_count], dtype=np.float32)
+        X_eval = np.asarray(X[-sample_count:], dtype=np.float32)
     elif X.shape[0] == 784:
-        X_eval = np.asarray(X[:, :sample_count].T, dtype=np.float32)
+        X_eval = np.asarray(X[:, -sample_count:].T, dtype=np.float32)
     else:
         raise ValueError(f"X must contain 784 features, got shape {X.shape}")
 
-    y_eval = np.asarray(y[: X_eval.shape[0]], dtype=np.int64).reshape(-1)
+    y_eval = np.asarray(y[-X_eval.shape[0] :], dtype=np.int64).reshape(-1)
     if X_eval.max() > 1.5:
         X_eval /= np.float32(255.0)
 
@@ -209,6 +209,39 @@ def save_confusion_matrix(y_true, y_pred, output_path=OUTPUT_DIR / "confusion_ma
     plt.tight_layout()
     plt.savefig(output_path, dpi=DPI)
     plt.close()
+
+
+def save_evaluation_metrics(y_true, y_pred, output_path=OUTPUT_DIR / "evaluation_metrics.txt"):
+    accuracy = float(np.mean(y_true == y_pred))
+    macro_precision = precision_score(y_true, y_pred, average="macro", zero_division=0)
+    macro_recall = recall_score(y_true, y_pred, average="macro", zero_division=0)
+    macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
+    report = classification_report(
+        y_true,
+        y_pred,
+        labels=np.arange(10),
+        digits=4,
+        zero_division=0,
+    )
+
+    output_path.write_text(
+        "\n".join(
+            [
+                "Evaluation Metrics on 10,000 Samples",
+                "=" * 35,
+                f"Accuracy:        {accuracy:.6f}",
+                f"Macro Precision: {macro_precision:.6f}",
+                f"Macro Recall:    {macro_recall:.6f}",
+                f"Macro F1-Score:  {macro_f1:.6f}",
+                "",
+                "Classification Report by Label",
+                "-" * 35,
+                report,
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
 def save_misclassified_samples(X_eval, y_true, y_pred, output_path=OUTPUT_DIR / "misclassified_samples.png"):
@@ -309,9 +342,10 @@ def main():
     model_params = load_model(MODEL_PATH)
     X_eval, y_eval = load_eval_data()
     y_pred, _ = predict_labels(model_params, X_eval)
+    save_evaluation_metrics(y_eval, y_pred)
     save_confusion_matrix(y_eval, y_pred)
     save_misclassified_samples(X_eval, y_eval, y_pred)
-    print("Saved confusion_matrix.png and misclassified_samples.png")
+    print("Saved evaluation_metrics.txt, confusion_matrix.png and misclassified_samples.png")
 
 
 if __name__ == "__main__":
