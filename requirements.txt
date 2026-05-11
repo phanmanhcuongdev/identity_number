@@ -1,0 +1,8 @@
+matplotlib==3.8.4
+numpy==2.4.4
+opencv_contrib_python==4.9.0.80
+opencv_python==4.11.0.86
+pandas==3.0.2
+pywebview==6.2.1
+scikit_learn==1.8.0
+scipy==1.17.1

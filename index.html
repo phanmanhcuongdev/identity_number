@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MNIST Digit Recognizer</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #1f2933;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(92vw, 520px);
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+      padding: 28px;
+      background: #ffffff;
+      border: 1px solid #d9e2ec;
+      border-radius: 8px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    canvas {
+      width: min(300px, 100%);
+      aspect-ratio: 1 / 1;
+      border: 2px solid #334e68;
+      border-radius: 8px;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+      min-width: 112px;
+      min-height: 44px;
+      border: 0;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: #2563eb;
+    }
+
+    button.secondary {
+      background: #52606d;
+    }
+
+    .result {
+      min-height: 70px;
+      text-align: center;
+    }
+
+    .digit {
+      font-size: 40px;
+      font-weight: 800;
+    }
+
+    .confidence {
+      color: #52606d;
+    }
+
+    .error {
+      color: #b42318;
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Nhận diện chữ số viết tay</h1>
+
+    <canvas id="drawCanvas" width="300" height="300"></canvas>
+
+    <div class="controls">
+      <button class="secondary" id="clearBtn">Clear</button>
+      <button id="predictBtn">Predict</button>
+    </div>
+
+    <div class="result">
+      <div id="prediction" class="digit">-</div>
+      <div id="confidence">Vẽ số rồi bấm Predict</div>
+    </div>
+  </main>
+
+<script>
+const canvas = document.getElementById("drawCanvas");
+const ctx = canvas.getContext("2d");
+
+let drawing = false;
+
+// nền trắng
+ctx.fillStyle = "white";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// vẽ
+canvas.addEventListener("mousedown", () => drawing = true);
+canvas.addEventListener("mouseup", () => {
+  drawing = false;
+  ctx.beginPath();
+});
+canvas.addEventListener("mouseout", () => drawing = false);
+
+canvas.addEventListener("mousemove", (e) => {
+  if (!drawing) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  ctx.lineWidth = 25;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "black";
+
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+});
+
+// touch support
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+
+  ctx.lineWidth = 25;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "black";
+
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+}, { passive: false });
+
+// clear
+document.getElementById("clearBtn").onclick = () => {
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  document.getElementById("prediction").innerText = "-";
+  document.getElementById("confidence").innerText = "Vẽ số rồi bấm Predict";
+};
+
+// predict qua pywebview API
+document.getElementById("predictBtn").onclick = async () => {
+  const btn = document.getElementById("predictBtn");
+  btn.disabled = true;
+
+  try {
+    const imageData = canvas.toDataURL("image/png");
+
+    const result = await window.pywebview.api.predict(imageData);
+
+    document.getElementById("prediction").innerText = result.label;
+    document.getElementById("confidence").innerText =
+      "Confidence: " + (result.confidence * 100).toFixed(2) + "%";
+
+  } catch (err) {
+    document.getElementById("confidence").innerText =
+      "Error: " + err.message;
+  }
+
+  btn.disabled = false;
+};
+</script>
+
+</body>
+</html>

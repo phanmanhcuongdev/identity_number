@@ -1,0 +1,4 @@
+__pycache__/
+train.npy
+labels.npy
+model.npz
